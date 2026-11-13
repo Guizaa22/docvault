@@ -1,0 +1,27 @@
+# Opt-in overlay. Run with:
+#   docker compose -f docker-compose.yml -f docker-compose.postgres.yml up --build -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: secure-notes-db
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes-demo-password   # DEMO ONLY
+      POSTGRES_DB: securenotes
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes -d securenotes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://notes:notes-demo-password@postgres:5432/securenotes"
+
+volumes:
+  pg-data:

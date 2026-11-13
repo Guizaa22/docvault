@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    image: secure-notes-api:latest
+    container_name: secure-notes-api
+    ports:
+      - "127.0.0.1:5000:5000"   # localhost only — not exposed to the network
+    volumes:
+      - app-data:/app/data       # persists secrets, keys and the database
+    restart: unless-stopped
+
+volumes:
+  app-data:
