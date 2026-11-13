@@ -1,5 +1,7 @@
 import io
 
+import pytest
+
 from conftest import auth, token_for
 
 ALICE = ("alice", "correct-horse-battery")
@@ -40,6 +42,7 @@ def test_content_is_encrypted_in_database(app, client):
     assert b"plaintext-marker" not in bytes(row["content_encrypted"])
 
 
+@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_idor_other_user_gets_404_on_download(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)
@@ -55,6 +58,7 @@ def test_idor_other_user_cannot_delete(client):
     assert client.get(f"/api/documents/{doc_id}/download", headers=auth(alice)).status_code == 200
 
 
+@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_admin_cannot_read_user_document(client):
     alice = token_for(client, *ALICE)
     admin = token_for(client, *ADMIN)
@@ -62,6 +66,7 @@ def test_admin_cannot_read_user_document(client):
     assert client.get(f"/api/documents/{doc_id}/download", headers=auth(admin)).status_code == 404
 
 
+@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_idor_attempt_is_audited(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)
@@ -72,7 +77,7 @@ def test_idor_attempt_is_audited(client):
     assert any(e["action"] == f"idor_attempt:document:{doc_id}" for e in events)
 
 
-def test_share_grants_read_access_and_unshare_revokes(client):
+def test_share_grants_read_access_and_lists_shared_document(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)
     doc_id = _make_doc(client, alice)
@@ -82,6 +87,13 @@ def test_share_grants_read_access_and_unshare_revokes(client):
     listed = client.get("/api/documents", headers=auth(bob)).get_json()["documents"]
     assert [d["id"] for d in listed] == [doc_id] and listed[0]["owned"] is False
 
+
+@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
+def test_unshare_revokes_download_access(client):
+    alice = token_for(client, *ALICE)
+    bob = token_for(client, *BOB)
+    doc_id = _make_doc(client, alice)
+    client.post(f"/api/documents/{doc_id}/shares", headers=auth(alice), json={"username": "bob"})
     bob_id = client.get("/api/me", headers=auth(bob)).get_json()["id"]
     assert client.delete(f"/api/documents/{doc_id}/shares/{bob_id}", headers=auth(alice)).status_code == 200
     assert client.get(f"/api/documents/{doc_id}/download", headers=auth(bob)).status_code == 404
