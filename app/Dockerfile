@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# Base image. Pin it by digest once (see docs/container-hardening.md), e.g.
-#   --build-arg PYTHON_IMAGE=python:3.12-slim@sha256:<digest>
-ARG PYTHON_IMAGE=python:3.12-slim
+# Base image pinned by digest: the tag can move, the digest cannot. Update it through a reviewed pull request
+# (Dependabot opens them), never by editing the tag alone.
+ARG PYTHON_IMAGE=python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
 
 # ---------- Stage 1: builder (has pip and the dependency install; never shipped) ----------
 FROM ${PYTHON_IMAGE} AS builder
