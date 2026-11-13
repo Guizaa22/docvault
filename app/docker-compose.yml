@@ -4,10 +4,22 @@ services:
     image: docvault-api:latest
     container_name: docvault-api
     ports:
-      - "127.0.0.1:5000:5000"   # localhost only — not exposed to the network
+      - "127.0.0.1:5000:5000"          # localhost only, not exposed to the network
+    environment:
+      SEED_DEMO_USERS: "1"             # LOCAL DEMO ONLY: creates alice/bob/admin1; never set in production
     volumes:
-      - app-data:/app/data       # persists secrets, keys and the database
+      - docvault-data:/app/data        # database and keys: the only writable path
+    # --- hardening: same controls Kubernetes will enforce later ---
+    read_only: true                    # root filesystem is read-only
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]                    # no Linux capabilities
+    security_opt:
+      - no-new-privileges:true         # setuid binaries cannot raise privileges
+    pids_limit: 200
+    mem_limit: 512m
+    cpus: 1.0
     restart: unless-stopped
 
 volumes:
-  app-data:
+  docvault-data:
