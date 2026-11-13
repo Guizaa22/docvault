@@ -1,0 +1,5 @@
+Name     Version ID              Fix Versions
+gunicorn 21.2.0  PYSEC-2026-1434 22.0.0
+gunicorn 21.2.0  PYSEC-2026-1433 22.0.0
+gunicorn 21.2.0  PYSEC-2026-1434 22.0.0
+gunicorn 21.2.0  PYSEC-2026-1433 22.0.0
