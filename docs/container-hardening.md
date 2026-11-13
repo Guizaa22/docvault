@@ -12,7 +12,7 @@ almost nothing to use and almost nothing they can change.
 | Code ownership | `chown -R app:app /app` (app owns its code) | Code owned by root, read-only to the app | A compromised process cannot rewrite the application |
 | Writable paths | Whole `/app` | Only `/app/data` (volume) and `/tmp` (tmpfs) | Supports `readOnlyRootFilesystem` |
 | Extra tools | `curl`, `openssl` CLI, apt lists | None; healthcheck and key generation use Python | Fewer binaries for an attacker to reuse |
-| Dependencies | Test tools (pytest, coverage) in the image | Runtime requirements only (`requirements.txt`); tests use `requirements-dev.txt` | Smaller image and fewer packages to patch |
+| Dependencies | Test tools (pytest, coverage) in the image | Runtime requirements only (`requirements.txt`); tests use `requirements-dev.txt` | Fewer packages to patch. Image size is unchanged (259 MB before, 258 MB after) because the Debian base dominates it |
 | Gunicorn | Installed twice, unpinned in the Dockerfile | Installed once, from `requirements.txt` | One source of truth for the scanner |
 | Secrets | Always generated into the volume | Taken from environment (Kubernetes Secret) when present; generated only for plain `docker run` | Prepares the Kubernetes secret flow |
 | Demo accounts | Always created with known passwords | Only if `SEED_DEMO_USERS=1` | Removes default credentials (A07) from the image |
@@ -34,18 +34,13 @@ almost nothing to use and almost nothing they can change.
   or Alpine base would shrink this but adds compatibility risk, so it is a documented trade-off.
 - The image still contains the V4 vulnerable gunicorn and V5 debug default on purpose; the pipeline must fail on
   them until they are fixed.
-- Pin by digest and image signing (cosign) are done in the pipeline step.
+- Image signing (cosign) and an SBOM are not done; they would be the next step beyond this project's scope.
 
-## Pin the base image by digest
+## Base image pinned by digest
 
-A tag like `3.12-slim` moves; a digest does not. Get the digest once and pass it as a build argument:
-
-```bash
-docker buildx imagetools inspect python:3.12-slim | grep -m1 Digest
-docker build --build-arg PYTHON_IMAGE=python:3.12-slim@sha256:<digest> -t docvault-api:hardened app/
-```
-
-Then replace the `ARG PYTHON_IMAGE=` default in `app/Dockerfile` with the same value.
+A tag like `3.12-slim` moves; a digest does not. `app/Dockerfile` now pins
+`python:3.12-slim@sha256:5e2bdb1b...fa5b` (the digest of the manifest list, obtained with
+`docker buildx imagetools inspect python:3.12-slim`). Dependabot proposes digest updates as pull requests.
 
 ## How to verify (commands and expected results)
 
