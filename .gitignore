@@ -1,0 +1,11 @@
+# secrets and local env (never commit real values)
+.env
+*.pem
+*.key
+# python
+__pycache__/
+*.pyc
+.venv/
+# tooling output
+*.sarif
+reports/
