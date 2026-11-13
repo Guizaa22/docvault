@@ -1,0 +1,10 @@
+# Gitleaks configuration. Default rules stay enabled; the only exception is narrow and documented.
+title = "DocVault gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Captured tool output kept as project evidence: it holds redacted findings and a throw-away Werkzeug debugger token from a local dev session, not a credential."
+targetRules = ["generic-api-key"]
+paths = ['''docs/evidence/.*''']

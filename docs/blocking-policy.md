@@ -25,7 +25,7 @@ a commit SHA. The workflow runs with read-only repository permissions and does n
 |---|---|---|
 | V1 SQL injection | Semgrep taint rule `docvault-sql-injection-request-to-execute` | strict xfail test; ZAP active scan |
 | V2 IDOR | **Not detectable by static analysis**: the code is syntactically fine, only the missing ownership check is wrong | strict xfail tests (4); authenticated ZAP/DAST |
-| V3 hardcoded secret | Gitleaks (history) | Trivy secret scanner on the working tree |
+| V3 hardcoded secret | Gitleaks (history) | None. Trivy's secret scanner only knows provider-specific patterns and private keys; in a dry run it did **not** flag the V3 key, so Gitleaks is the single detector for this flaw |
 | V4 vulnerable dependency | Trivy `fs` and `image` (High with fix) | Dependabot pull request |
 | V5 debug and verbose errors | Semgrep rules `docvault-flask-debug-enabled` and `docvault-traceback-in-application-code` | ZAP information-disclosure checks |
 
@@ -37,6 +37,13 @@ and an authenticated dynamic scan.
 A finding may be accepted only by adding it to `.trivyignore` (or a Semgrep `nosem` comment) with a reason, an owner
 and an **expiry date**, in a pull request that the other team member reviews. After the expiry date the finding
 blocks again. The file is empty today.
+
+Current exceptions:
+
+- `.gitleaks.toml`: rule `generic-api-key` is ignored under `docs/evidence/`. Evidence files are captured tool
+  output; in a dry run Gitleaks flagged a `SECRET = "..."` token printed by the Werkzeug debugger in the V5 evidence.
+  It is a throw-away dev-session token. The exception is limited to one rule and one folder, and real code and
+  config are still fully scanned.
 
 ## Enforcing it
 
