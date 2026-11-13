@@ -205,6 +205,13 @@
       <div class="card">
         <h2>Your documents</h2>
         <div class="sub">Only you and the people you share with can open them. Anyone else gets a 404.</div>
+        <form onsubmit="return searchDocs(event)" style="margin-bottom:14px">
+          <div class="row">
+            <div class="field" style="flex:2"><label>Search your documents by title</label><input id="d-search" maxlength="200"></div>
+            <button type="submit" class="btn-navy">Search</button>
+            <button type="button" class="btn-ghost" onclick="document.getElementById('d-search').value=''; loadDocs()">Reset</button>
+          </div>
+        </form>
         <div id="notes-list"></div>
       </div>
     </div>
@@ -359,7 +366,22 @@ async function loadDocs() {
   const box = document.getElementById("notes-list");
   box.textContent = "";
   if (!r.ok) { toast("Could not load documents", r.status, false); return; }
-  const docs = r.data.documents || [];
+  renderDocs(r.data.documents || []);
+}
+
+async function searchDocs(e) {
+  e.preventDefault();
+  const q = document.getElementById("d-search").value;
+  const r = await api("/api/documents/search?q=" + encodeURIComponent(q));
+  if (!r.ok) { toast(r.data.error || "Search failed", r.status, false); return false; }
+  // search only returns the caller's own documents
+  renderDocs((r.data.documents || []).map(d => Object.assign({ owned: true }, d)));
+  return false;
+}
+
+function renderDocs(docs) {
+  const box = document.getElementById("notes-list");
+  box.textContent = "";
   if (docs.length === 0) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "No documents yet. Upload one above."; box.appendChild(e); return; }
   docs.forEach(d => {
     const row = document.createElement("div"); row.className = "note";
