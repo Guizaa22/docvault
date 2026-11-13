@@ -8,7 +8,7 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 |----|------|-----------|-----|--------|
 | V1 | SQL injection in document search | A05 Injection | CWE-89 | Planted, not fixed |
 | V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Planted, not fixed |
-| V3 | Hardcoded secret in source | A02 Security Misconfiguration / A04 Cryptographic Failures | CWE-798 | Planned |
+| V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Planted, not fixed |
 | V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Planned |
 | V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489 | Planned |
 
@@ -65,4 +65,30 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 - **Planned fix:** restore `_load_accessible(doc_id)` and `_not_found(doc_id)`. Four tests already encode the
   secure behaviour (`xfail(strict=True)`; remove the markers when the fix lands).
 - **Evidence:** TODO screenshot/log of bob receiving `200` in `docs/evidence/v2-idor-before.png`.
+
+---
+
+## V3: Hardcoded secret in source code
+
+- **Where:** `app/app/integrations.py`, constant `BACKUP_SERVICE_API_KEY` (used by `app/scripts/backup_documents.py`).
+- **Cause:** the API key of the third-party backup service is written directly in the source and committed. Anyone
+  with read access to the repository (or to any clone, fork, CI log or image layer built from it) has the key.
+  The value is **fake**, made up for this project: the service host is the reserved `.invalid` domain, so no real
+  system is involved. It is shaped like a production key on purpose so scanners treat it as real.
+- **Impact:** an attacker who reads the repository can authenticate to the backup service as DocVault and read or
+  overwrite backups. Because the key lives in version control, **deleting it from the code later does not remove
+  it**: it stays in the git history. A hardcoded secret also cannot be rotated without a code change and redeploy.
+- **Exploitation (own instance only):** no attack needed beyond reading the file:
+  ```bash
+  git grep -n "BACKUP_SERVICE_API_KEY" -- app/app/integrations.py
+  # secret scanner view (this is also how the pipeline will catch it):
+  gitleaks detect --source . --redact -v
+  ```
+  Result observed: Gitleaks rule `generic-api-key` reports `app/app/integrations.py:11`.
+- **Detection plan:** Gitleaks in the pipeline (blocking), plus a history scan. Semgrep may also flag the literal.
+- **Planned fix (requirement 4.4):** read the key at runtime from an environment variable / secret store, fail at
+  startup if missing, and add a pre-commit/CI secret scan. Then run the incident procedure **revoke first, purge
+  after**: (1) rotate the key at the service so the leaked value is dead, (2) only then rewrite git history
+  (`git filter-repo`) and force-push, (3) re-scan the whole history to prove it is clean.
+- **Evidence:** TODO Gitleaks output in `docs/evidence/v3-gitleaks-before.txt`.
 
