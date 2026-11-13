@@ -22,6 +22,7 @@ def create_app(test_config=None):
     app.config["JWT_EC_PRIVATE_KEY_PATH"] = os.environ.get("JWT_EC_PRIVATE_KEY_PATH", os.path.join(root, "keys", "jwt_ec_key.pem"))
     app.config["JWT_EC_PUBLIC_KEY_PATH"] = os.environ.get("JWT_EC_PUBLIC_KEY_PATH", os.path.join(root, "keys", "jwt_ec_pub.pem"))
     app.config["RATELIMIT_ENABLED"] = True
+    app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # reject oversized requests early
     for path in (app.config["SIGNING_KEY_PATH"], app.config["SIGNING_PUBKEY_PATH"],
                  app.config["JWT_EC_PRIVATE_KEY_PATH"], app.config["JWT_EC_PUBLIC_KEY_PATH"]):
         if not os.path.isfile(path):
@@ -44,9 +45,9 @@ def create_app(test_config=None):
 
     from .admin import bp as admin_bp
     from .auth import bp as auth_bp
-    from .notes import bp as notes_bp
+    from .documents import bp as documents_bp
     from .users import bp as users_bp
-    for blueprint in (auth_bp, users_bp, admin_bp, notes_bp):
+    for blueprint in (auth_bp, users_bp, admin_bp, documents_bp):
         app.register_blueprint(blueprint)
 
     @app.get("/api/health")
@@ -74,6 +75,10 @@ def create_app(test_config=None):
     @app.errorhandler(405)
     def method_not_allowed(e):
         return jsonify(error="Method not allowed"), 405
+
+    @app.errorhandler(413)
+    def too_large(e):
+        return jsonify(error="Request too large"), 413
 
     @app.errorhandler(429)
     def too_many(e):
