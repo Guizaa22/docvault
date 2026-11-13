@@ -13,7 +13,7 @@ limits==5.8.0
 MarkupSafe==3.0.3
 ordered-set==4.1.0
 packaging==26.3
-pycparser==3.0
+pycparser==3.12
 PyJWT==2.15.1
 python-dotenv==1.2.3
 typing_extensions==4.16.0
