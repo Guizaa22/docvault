@@ -6,9 +6,9 @@ def _fernet():
     return Fernet(current_app.config["FERNET_KEY"])
 
 
-def encrypt(text):
-    return _fernet().encrypt(text.encode("utf-8"))
+def encrypt_bytes(data: bytes) -> bytes:
+    return _fernet().encrypt(data)
 
 
-def decrypt(blob):
-    return _fernet().decrypt(blob).decode("utf-8")
+def decrypt_bytes(blob: bytes) -> bytes:
+    return _fernet().decrypt(blob)

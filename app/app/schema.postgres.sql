@@ -8,12 +8,23 @@ CREATE TABLE IF NOT EXISTS users (
     created_at      TEXT NOT NULL DEFAULT (now()::text)
 );
 
-CREATE TABLE IF NOT EXISTS notes (
+CREATE TABLE IF NOT EXISTS documents (
     id                SERIAL PRIMARY KEY,
     owner_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title             TEXT NOT NULL,
+    filename          TEXT NOT NULL,
+    mime_type         TEXT NOT NULL,
+    size              INTEGER NOT NULL,
     content_encrypted BYTEA NOT NULL,
     created_at        TEXT NOT NULL DEFAULT (now()::text)
+);
+
+CREATE TABLE IF NOT EXISTS shares (
+    id          SERIAL PRIMARY KEY,
+    document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TEXT NOT NULL DEFAULT (now()::text),
+    UNIQUE (document_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS revoked_tokens (

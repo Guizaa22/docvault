@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Notes — Dashboard</title>
+<title>DocVault — Dashboard</title>
 <style>
   :root {
     --green:#10b981; --green-d:#059669; --navy:#0f3460; --navy-d:#0b2545;
@@ -138,7 +138,7 @@
           <rect x="4" y="10" width="16" height="11" rx="2"></rect>
           <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
         </svg>
-        Secure Notes
+        DocVault
       </h1>
       <p>Authenticated · encrypted · signed</p>
     </div>
@@ -171,7 +171,7 @@
         <rect x="4" y="10" width="16" height="11" rx="2"></rect>
         <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
       </svg>
-      Secure Notes
+      DocVault
     </div>
     <div class="right">
       <div class="user-chip">
@@ -184,27 +184,27 @@
 
   <div class="container">
     <div class="tabs">
-      <button id="nav-notes" class="active" onclick="switchTab('notes')">My Notes</button>
+      <button id="nav-notes" class="active" onclick="switchTab('notes')">Documents</button>
       <button id="nav-admin" class="hidden" onclick="switchTab('admin')">Admin · Users</button>
       <button id="nav-audit" class="hidden" onclick="switchTab('audit')">Audit Log</button>
     </div>
 
-    <!-- NOTES -->
+    <!-- DOCUMENTS -->
     <div id="panel-notes">
       <div class="card">
-        <h2>Create a note</h2>
-        <div class="sub">The content is encrypted (Fernet / AES+HMAC) before it reaches the database.</div>
-        <form onsubmit="return createNote(event)">
+        <h2>Upload a document</h2>
+        <div class="sub">Files are encrypted (Fernet / AES+HMAC) before they reach the database. Max 1 MB; txt, md, csv, pdf, png, jpg, docx.</div>
+        <form onsubmit="return uploadDoc(event)">
           <div class="row">
-            <div class="field"><label>Title</label><input id="n-title" maxlength="100" required></div>
-            <div class="field" style="flex:2"><label>Content</label><input id="n-content" maxlength="5000" required></div>
-            <button type="submit" class="btn-green">Add note</button>
+            <div class="field"><label>Title</label><input id="d-title" maxlength="100"></div>
+            <div class="field" style="flex:2"><label>File</label><input id="d-file" type="file" required></div>
+            <button type="submit" class="btn-green">Upload</button>
           </div>
         </form>
       </div>
       <div class="card">
-        <h2>Your notes</h2>
-        <div class="sub">Only you can read these. Another user requesting them gets a 404.</div>
+        <h2>Your documents</h2>
+        <div class="sub">Only you and the people you share with can open them. Anyone else gets a 404.</div>
         <div id="notes-list"></div>
       </div>
     </div>
@@ -213,7 +213,7 @@
     <div id="panel-admin" style="display:none">
       <div class="card">
         <h2>User management</h2>
-        <div class="sub">Roles and lock status. Admins cannot read users' note contents (least privilege).</div>
+        <div class="sub">Roles and lock status. Admins cannot read users' documents (least privilege).</div>
         <div style="overflow-x:auto">
           <table>
             <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
@@ -239,7 +239,7 @@
   </div>
 </div>
 
-<!-- ========== NOTE MODAL ========== -->
+<!-- ========== MODAL ========== -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <div class="modal-head">
@@ -257,7 +257,7 @@
 // ============ Security notes ============
 // 1. Token is kept ONLY in this in-memory variable — never localStorage/sessionStorage.
 //    This limits the blast radius of any XSS: a refresh clears it (re-login required).
-// 2. All dynamic data (note content, usernames, audit events) is written with
+// 2. All dynamic data (document titles, usernames, audit events) is written with
 //    textContent / DOM APIs — never innerHTML — so stored values cannot inject markup.
 // 3. The page is served same-origin by Flask, so there is no CORS surface to weaken.
 let TOKEN = null;
@@ -277,7 +277,8 @@ function toast(msg, status, ok) {
 async function api(path, method = "GET", body = null) {
   const opts = { method, headers: {} };
   if (TOKEN) opts.headers["Authorization"] = "Bearer " + TOKEN;
-  if (body) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  if (body instanceof FormData) { opts.body = body; }
+  else if (body) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
   const res = await fetch(API + path, opts);
   let data = {};
   try { data = await res.json(); } catch (e) {}
@@ -331,7 +332,7 @@ async function loadMe() {
   document.getElementById("login-view").style.display = "none";
   document.getElementById("app-view").style.display = "block";
   switchTab("notes");
-  loadNotes();
+  loadDocs();
 }
 
 async function logout() {
@@ -352,110 +353,95 @@ function switchTab(tab) {
   if (tab === "audit") loadAudit();
 }
 
-// ---------- notes ----------
-async function loadNotes() {
-  const r = await api("/api/notes");
+// ---------- documents ----------
+async function loadDocs() {
+  const r = await api("/api/documents");
   const box = document.getElementById("notes-list");
   box.textContent = "";
-  if (!r.ok) { toast("Could not load notes", r.status, false); return; }
-  const notes = r.data.notes || [];
-  if (notes.length === 0) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "No notes yet. Create one above."; box.appendChild(e); return; }
-  notes.forEach(n => {
+  if (!r.ok) { toast("Could not load documents", r.status, false); return; }
+  const docs = r.data.documents || [];
+  if (docs.length === 0) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "No documents yet. Upload one above."; box.appendChild(e); return; }
+  docs.forEach(d => {
     const row = document.createElement("div"); row.className = "note";
     const meta = document.createElement("div"); meta.className = "meta";
-    const t = document.createElement("div"); t.className = "title"; t.textContent = n.title; // textContent = XSS-safe
-    const d = document.createElement("div"); d.className = "date"; d.textContent = n.created_at;
-    meta.appendChild(t); meta.appendChild(d);
+    const t = document.createElement("div"); t.className = "title"; t.textContent = d.title; // textContent = XSS-safe
+    const sub = document.createElement("div"); sub.className = "date";
+    sub.textContent = d.filename + " · " + Math.max(1, Math.round(d.size / 1024)) + " KB · " + (d.owned ? "yours" : "shared by " + d.owner) + " · " + d.created_at;
+    meta.appendChild(t); meta.appendChild(sub);
     const acts = document.createElement("div"); acts.className = "acts";
-    acts.appendChild(mkBtn("Open", "btn-navy btn-sm", () => openNote(n.id)));
-    acts.appendChild(mkBtn("Export", "btn-ghost btn-sm", () => exportNote(n.id)));
-    acts.appendChild(mkBtn("Delete", "btn-red btn-sm", () => delNote(n.id)));
+    acts.appendChild(mkBtn("Download", "btn-navy btn-sm", () => downloadDoc(d.id, d.filename)));
+    if (d.owned) {
+      acts.appendChild(mkBtn("Share", "btn-ghost btn-sm", () => openShare(d)));
+      acts.appendChild(mkBtn("Delete", "btn-red btn-sm", () => delDoc(d.id)));
+    }
     row.appendChild(meta); row.appendChild(acts);
     box.appendChild(row);
   });
 }
 function mkBtn(label, cls, fn) { const b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
 
-async function createNote(e) {
+async function uploadDoc(e) {
   e.preventDefault();
-  const title = document.getElementById("n-title").value;
-  const content = document.getElementById("n-content").value;
-  const r = await api("/api/notes", "POST", { title, content });
-  if (r.ok) { toast("Note created & encrypted", r.status, true); document.getElementById("n-title").value = ""; document.getElementById("n-content").value = ""; loadNotes(); }
-  else { toast(r.data.error || "Failed", r.status, false); }
+  const file = document.getElementById("d-file").files[0];
+  if (!file) return false;
+  const fd = new FormData();
+  fd.append("file", file);
+  const title = document.getElementById("d-title").value.trim();
+  if (title) fd.append("title", title);
+  const r = await api("/api/documents", "POST", fd);
+  if (r.ok) { toast("Document uploaded & encrypted", r.status, true); document.getElementById("d-title").value = ""; document.getElementById("d-file").value = ""; loadDocs(); }
+  else { toast(r.data.error || "Upload failed", r.status, false); }
   return false;
 }
 
-async function openNote(id) {
-  const r = await api("/api/notes/" + id);
-  if (!r.ok) { toast(r.data.error || "Cannot open", r.status, false); return; }
-  document.getElementById("m-title").textContent = r.data.title;
-  const body = document.getElementById("m-body"); body.textContent = "";
-  const lbl = document.createElement("label"); lbl.textContent = "Decrypted content";
-  const box = document.createElement("div"); box.className = "content-box"; box.textContent = r.data.content; // XSS-safe
-  body.appendChild(lbl); body.appendChild(box);
-  showModal();
+async function downloadDoc(id, filename) {
+  // The Bearer token cannot ride on a plain link, so fetch the bytes and save them.
+  const res = await fetch(API + "/api/documents/" + id + "/download", { headers: { "Authorization": "Bearer " + TOKEN } });
+  if (!res.ok) { let m = "Cannot download"; try { m = (await res.json()).error || m; } catch (e) {} toast(m, res.status, false); return; }
+  const blob = await res.blob();
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href);
 }
 
-async function delNote(id) {
-  const r = await api("/api/notes/" + id, "DELETE");
-  if (r.ok) { toast("Note deleted", r.status, true); loadNotes(); }
+async function delDoc(id) {
+  const r = await api("/api/documents/" + id, "DELETE");
+  if (r.ok) { toast("Document deleted", r.status, true); loadDocs(); }
   else { toast(r.data.error || "Failed", r.status, false); }
 }
 
-// ---------- signed export + in-browser verification ----------
-async function exportNote(id) {
-  const r = await api("/api/notes/" + id + "/export");
-  if (!r.ok) { toast(r.data.error || "Export failed", r.status, false); return; }
-  const payload = r.data;
-  document.getElementById("m-title").textContent = "Signed export — note " + id;
+// ---------- sharing ----------
+async function openShare(d) {
+  document.getElementById("m-title").textContent = "Share — " + d.title;
   const body = document.getElementById("m-body"); body.textContent = "";
-
-  const l1 = document.createElement("label"); l1.textContent = "Signed document (" + payload.algorithm + ")";
-  const pre = document.createElement("div"); pre.className = "pre"; pre.textContent = JSON.stringify(payload, null, 2);
-  body.appendChild(l1); body.appendChild(pre);
-
-  const btnRow = document.createElement("div"); btnRow.style.marginTop = "14px"; btnRow.style.display = "flex"; btnRow.style.gap = "8px";
-  btnRow.appendChild(mkBtn("Verify signature in browser", "btn-green btn-sm", () => verifyExport(payload)));
-  btnRow.appendChild(mkBtn("Download .json", "btn-ghost btn-sm", () => download("note-" + id + "-signed.json", JSON.stringify(payload, null, 2))));
-  body.appendChild(btnRow);
-
-  const vb = document.createElement("div"); vb.className = "verify-box"; vb.id = "verify-box";
-  body.appendChild(vb);
+  const lbl = document.createElement("label"); lbl.textContent = "Share with (username)";
+  const input = document.createElement("input"); input.maxLength = 64;
+  const add = mkBtn("Share", "btn-green btn-sm", async () => {
+    const r = await api("/api/documents/" + d.id + "/shares", "POST", { username: input.value.trim() });
+    toast(r.ok ? "Shared" : (r.data.error || "Failed"), r.status, r.ok);
+    if (r.ok) { input.value = ""; renderShares(d, list); }
+  });
+  add.style.marginTop = "10px";
+  const list = document.createElement("div"); list.style.marginTop = "14px";
+  body.appendChild(lbl); body.appendChild(input); body.appendChild(add); body.appendChild(list);
+  await renderShares(d, list);
   showModal();
 }
-
-// Canonical JSON identical to the server's json.dumps(sort_keys, separators=(",",":"))
-function canonical(obj) {
-  if (Array.isArray(obj)) return "[" + obj.map(canonical).join(",") + "]";
-  if (obj && typeof obj === "object") {
-    return "{" + Object.keys(obj).sort().map(k => JSON.stringify(k) + ":" + canonical(obj[k])).join(",") + "}";
-  }
-  return JSON.stringify(obj);
-}
-function b64ToBytes(b64) { const bin = atob(b64); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
-function pemToDer(pem) { const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""); return b64ToBytes(b64); }
-
-async function verifyExport(payload) {
-  const vb = document.getElementById("verify-box");
-  try {
-    const pk = await api("/api/public-key");
-    const der = pemToDer(pk.data.public_key);
-    const key = await crypto.subtle.importKey("spki", der.buffer, { name: "Ed25519" }, false, ["verify"]);
-    const data = new TextEncoder().encode(canonical(payload.document));
-    const sig = b64ToBytes(payload.signature);
-    const valid = await crypto.subtle.verify({ name: "Ed25519" }, key, sig, data);
-    vb.className = "verify-box " + (valid ? "verify-ok" : "verify-bad");
-    vb.textContent = valid ? "✓ VALID — signed by this server, not modified." : "✗ INVALID — signature does not match.";
-  } catch (err) {
-    vb.className = "verify-box verify-bad";
-    vb.textContent = "This browser can't verify Ed25519 here. Use the offline tool: python tools/verify_export.py export.json server_pub.pem";
-  }
-}
-function download(name, text) {
-  const blob = new Blob([text], { type: "application/json" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
-  URL.revokeObjectURL(a.href);
+async function renderShares(d, list) {
+  list.textContent = "";
+  const r = await api("/api/documents/" + d.id + "/shares");
+  if (!r.ok) return;
+  const shares = r.data.shares || [];
+  if (shares.length === 0) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "Not shared with anyone."; list.appendChild(e); return; }
+  shares.forEach(s => {
+    const row = document.createElement("div"); row.className = "note";
+    const name = document.createElement("div"); name.className = "title"; name.textContent = s.username;
+    const rm = mkBtn("Remove", "btn-red btn-sm", async () => {
+      const rr = await api("/api/documents/" + d.id + "/shares/" + s.id, "DELETE");
+      toast(rr.ok ? "Access removed" : (rr.data.error || "Failed"), rr.status, rr.ok);
+      renderShares(d, list);
+    });
+    row.appendChild(name); row.appendChild(rm); list.appendChild(row);
+  });
 }
 
 // ---------- admin: users ----------

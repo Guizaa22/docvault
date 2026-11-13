@@ -8,12 +8,23 @@ CREATE TABLE IF NOT EXISTS users (
     created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS notes (
+CREATE TABLE IF NOT EXISTS documents (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title             TEXT NOT NULL,
+    filename          TEXT NOT NULL,
+    mime_type         TEXT NOT NULL,
+    size              INTEGER NOT NULL,
     content_encrypted BLOB NOT NULL,
     created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shares (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (document_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS revoked_tokens (
