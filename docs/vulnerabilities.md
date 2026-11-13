@@ -10,7 +10,7 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 | V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Planted, not fixed |
 | V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Planted, not fixed |
 | V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Planted |
-| V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489 | Planned |
+| V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489, CWE-209 | Planted |
 
 ---
 
@@ -116,3 +116,27 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 - **Planned fix:** upgrade to `gunicorn>=22.0.0`, then re-run the scans to prove the finding is gone. Longer term,
   pin with hashes and enable automated update PRs.
 - **Evidence:** TODO `docs/evidence/v4-pip-audit-before.txt`.
+
+---
+
+## V5: Debug mode and verbose error messages
+
+- **Where:** `app/app/__init__.py`, the `500` error handler (debug output is **on by default**, switch
+  `DOCVAULT_DEBUG`), and `app/run.py` (`app.run(debug=True)` starts the Werkzeug debugger when run directly).
+- **Cause:** insecure default. Unless someone remembers to turn it off, any unhandled exception returns the
+  exception type, its message, the full stack trace and the database path to the caller.
+- **Impact:** information disclosure that helps every other attack: file paths and code structure, library
+  versions, SQL fragments and error text (which makes SQL injection like V1 much easier to tune). With the
+  Werkzeug debugger exposed, a console PIN is the only barrier to remote code execution.
+- **Exploitation (own instance only):** send a lone quote to the search box (this also shows how V1 and V5
+  reinforce each other: the SQL error text reveals the query structure). Replace `$TOKEN` with a login token:
+  ```bash
+  curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/api/documents/search?q='"
+  ```
+  Observed: HTTP 500 whose JSON body contains `"trace"`, source file paths and the SQLite error text.
+- **Detection plan:** ZAP active scan (information disclosure, application error disclosure) in the authenticated
+  DAST step, Semgrep rule for `debug=True`, and Kubernetes review of environment values.
+- **Planned fix:** return a generic message plus a correlation id, log the details server side only, default
+  `DOCVAULT_DEBUG` to off, remove `debug=True` from `run.py`, and send logs to Loki. The strict xfail test
+  `test_server_error_does_not_leak_details` flips when this lands.
+- **Evidence:** TODO `docs/evidence/v5-verbose-error-before.txt` (curl output).
