@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Notes — Dashboard</title>
+<style>
+  :root {
+    --green:#10b981; --green-d:#059669; --navy:#0f3460; --navy-d:#0b2545;
+    --ink:#1a1a2e; --slate:#64748b; --slate-l:#94a3b8; --line:#e2e8f0;
+    --bg:#f1f5f9; --card:#ffffff; --red:#dc2626; --amber:#d97706; --blue:#2563eb;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; font-size:14px;
+    min-height:100vh;
+  }
+  button { font-family:inherit; cursor:pointer; border:none; border-radius:7px;
+    font-size:13px; font-weight:600; padding:9px 16px; transition:.15s; }
+  button:active { transform:translateY(1px); }
+  .btn-green { background:var(--green); color:#fff; }
+  .btn-green:hover { background:var(--green-d); }
+  .btn-navy { background:var(--navy); color:#fff; }
+  .btn-navy:hover { background:var(--navy-d); }
+  .btn-ghost { background:transparent; color:var(--slate); border:1px solid var(--line); }
+  .btn-ghost:hover { background:#f8fafc; color:var(--ink); }
+  .btn-red { background:#fef2f2; color:var(--red); border:1px solid #fecaca; }
+  .btn-red:hover { background:#fee2e2; }
+  .btn-sm { padding:5px 10px; font-size:12px; }
+  input, select {
+    font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:7px; width:100%; background:#fff; color:var(--ink);
+  }
+  input:focus, select:focus { outline:none; border-color:var(--green); box-shadow:0 0 0 3px #10b98122; }
+  label { display:block; font-size:12px; font-weight:600; color:var(--slate); margin-bottom:5px; }
+  .field { margin-bottom:14px; }
+
+  /* ---------- Login ---------- */
+  #login-view { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card { background:var(--card); border-radius:16px; box-shadow:0 10px 40px #0f346018;
+    width:100%; max-width:400px; overflow:hidden; }
+  .login-head { background:linear-gradient(135deg,var(--navy),var(--navy-d)); color:#fff;
+    padding:28px 28px 24px; }
+  .login-head h1 { font-size:20px; display:flex; align-items:center; gap:9px; }
+  .login-head p { color:#cbd5e1; font-size:13px; margin-top:4px; }
+  .lock-ico { width:26px; height:26px; }
+  .login-body { padding:24px 28px 28px; }
+  .tabs-auth { display:flex; gap:6px; margin-bottom:20px; background:#f1f5f9; padding:4px; border-radius:9px; }
+  .tabs-auth button { flex:1; background:transparent; color:var(--slate); padding:8px; }
+  .tabs-auth button.active { background:#fff; color:var(--navy); box-shadow:0 1px 3px #0003; }
+
+  /* ---------- App shell ---------- */
+  #app-view { display:none; }
+  .topbar { background:var(--navy); color:#fff; padding:0 24px; height:60px;
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+  .topbar .brand { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .topbar .right { display:flex; align-items:center; gap:14px; }
+  .user-chip { display:flex; align-items:center; gap:8px; font-size:13px; }
+  .badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.3px; }
+  .badge-user { background:#334155; color:#cbd5e1; }
+  .badge-admin { background:var(--green); color:#04291d; }
+  .container { max-width:1000px; margin:0 auto; padding:24px; }
+  .tabs { display:flex; gap:4px; border-bottom:2px solid var(--line); margin-bottom:22px; }
+  .tabs button { background:transparent; color:var(--slate); border-radius:0; padding:11px 18px;
+    border-bottom:2px solid transparent; margin-bottom:-2px; }
+  .tabs button.active { color:var(--navy); border-bottom-color:var(--green); }
+  .tabs button.hidden { display:none; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:20px; margin-bottom:18px; }
+  .card h2 { font-size:15px; color:var(--navy); margin-bottom:4px; }
+  .card .sub { font-size:12px; color:var(--slate-l); margin-bottom:16px; }
+  .row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+  .row .field { flex:1; min-width:140px; margin-bottom:0; }
+
+  .note { border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .note .meta { min-width:0; }
+  .note .title { font-weight:700; color:var(--ink); }
+  .note .date { font-size:12px; color:var(--slate-l); margin-top:2px; }
+  .note .acts { display:flex; gap:6px; flex-shrink:0; }
+  .empty { text-align:center; color:var(--slate-l); padding:30px; font-size:13px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; background:#f8fafc; color:var(--slate); font-size:11px; text-transform:uppercase;
+    letter-spacing:.4px; padding:9px 12px; border-bottom:1px solid var(--line); }
+  td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  .mono { font-family:"SFMono-Regular",Consolas,monospace; font-size:12px; }
+  .evt { font-family:"SFMono-Regular",Consolas,monospace; font-size:12px; }
+  .evt-danger { color:var(--red); font-weight:600; }
+  .evt-warn { color:var(--amber); font-weight:600; }
+  .evt-ok { color:var(--green-d); }
+
+  /* ---------- Modal ---------- */
+  .modal-bg { position:fixed; inset:0; background:#0f172acc; display:none; align-items:center;
+    justify-content:center; padding:20px; z-index:50; }
+  .modal-bg.show { display:flex; }
+  .modal { background:#fff; border-radius:14px; width:100%; max-width:520px; overflow:hidden;
+    box-shadow:0 20px 60px #0008; }
+  .modal-head { padding:18px 22px; border-bottom:1px solid var(--line); display:flex;
+    justify-content:space-between; align-items:center; }
+  .modal-head h3 { font-size:15px; color:var(--navy); }
+  .modal-head .x { background:none; color:var(--slate); font-size:20px; padding:0 6px; }
+  .modal-body { padding:22px; }
+  .modal-body .content-box { background:#f8fafc; border:1px solid var(--line); border-radius:8px;
+    padding:14px; margin-top:4px; white-space:pre-wrap; word-break:break-word; }
+  .pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px; font-family:monospace;
+    font-size:11px; white-space:pre-wrap; word-break:break-all; max-height:240px; overflow:auto; }
+  .verify-box { margin-top:14px; padding:12px 14px; border-radius:8px; font-weight:600; font-size:13px; display:none; }
+  .verify-ok { background:#ecfdf5; color:var(--green-d); border:1px solid #a7f3d0; display:block; }
+  .verify-bad { background:#fef2f2; color:var(--red); border:1px solid #fecaca; display:block; }
+
+  /* ---------- Toast ---------- */
+  #toast-wrap { position:fixed; bottom:20px; right:20px; z-index:100; display:flex;
+    flex-direction:column; gap:8px; }
+  .toast { background:#fff; border-left:4px solid var(--slate); border-radius:8px; padding:12px 16px;
+    box-shadow:0 6px 20px #0002; font-size:13px; max-width:340px; animation:slidein .2s; }
+  .toast.ok { border-left-color:var(--green); }
+  .toast.err { border-left-color:var(--red); }
+  .toast .code { font-family:monospace; font-weight:700; margin-right:6px; }
+  @keyframes slidein { from{transform:translateX(20px);opacity:0;} to{transform:none;opacity:1;} }
+
+  .hint { font-size:11px; color:var(--slate-l); margin-top:6px; }
+  .section-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--slate); margin:20px 0 10px; }
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-head">
+      <h1>
+        <svg class="lock-ico" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+          <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+        </svg>
+        Secure Notes
+      </h1>
+      <p>Authenticated · encrypted · signed</p>
+    </div>
+    <div class="login-body">
+      <div class="tabs-auth">
+        <button id="tab-login" class="active" onclick="switchAuth('login')">Sign in</button>
+        <button id="tab-register" onclick="switchAuth('register')">Register</button>
+      </div>
+      <form id="auth-form" onsubmit="return doAuth(event)">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+          <div class="hint" id="pw-hint" style="display:none">Must be 12–128 characters.</div>
+        </div>
+        <button type="submit" class="btn-green" style="width:100%" id="auth-submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app-view">
+  <div class="topbar">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2">
+        <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+      </svg>
+      Secure Notes
+    </div>
+    <div class="right">
+      <div class="user-chip">
+        <span id="who"></span>
+        <span class="badge" id="role-badge"></span>
+      </div>
+      <button class="btn-ghost btn-sm" style="color:#cbd5e1;border-color:#334155" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button id="nav-notes" class="active" onclick="switchTab('notes')">My Notes</button>
+      <button id="nav-admin" class="hidden" onclick="switchTab('admin')">Admin · Users</button>
+      <button id="nav-audit" class="hidden" onclick="switchTab('audit')">Audit Log</button>
+    </div>
+
+    <!-- NOTES -->
+    <div id="panel-notes">
+      <div class="card">
+        <h2>Create a note</h2>
+        <div class="sub">The content is encrypted (Fernet / AES+HMAC) before it reaches the database.</div>
+        <form onsubmit="return createNote(event)">
+          <div class="row">
+            <div class="field"><label>Title</label><input id="n-title" maxlength="100" required></div>
+            <div class="field" style="flex:2"><label>Content</label><input id="n-content" maxlength="5000" required></div>
+            <button type="submit" class="btn-green">Add note</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Your notes</h2>
+        <div class="sub">Only you can read these. Another user requesting them gets a 404.</div>
+        <div id="notes-list"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="panel-admin" style="display:none">
+      <div class="card">
+        <h2>User management</h2>
+        <div class="sub">Roles and lock status. Admins cannot read users' note contents (least privilege).</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT -->
+    <div id="panel-audit" style="display:none">
+      <div class="card">
+        <h2>Security audit log</h2>
+        <div class="sub">Every security event — logins, denied access, IDOR attempts, lockouts — with user, IP and time.</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Event</th><th>IP</th></tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== NOTE MODAL ========== -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="m-title"></h3>
+      <button class="x" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+"use strict";
+// ============ Security notes ============
+// 1. Token is kept ONLY in this in-memory variable — never localStorage/sessionStorage.
+//    This limits the blast radius of any XSS: a refresh clears it (re-login required).
+// 2. All dynamic data (note content, usernames, audit events) is written with
+//    textContent / DOM APIs — never innerHTML — so stored values cannot inject markup.
+// 3. The page is served same-origin by Flask, so there is no CORS surface to weaken.
+let TOKEN = null;
+let ME = null;
+const API = ""; // same origin
+
+// ---------- helpers ----------
+function toast(msg, status, ok) {
+  const t = document.createElement("div");
+  t.className = "toast " + (ok ? "ok" : "err");
+  if (status) { const c = document.createElement("span"); c.className = "code"; c.textContent = status; t.appendChild(c); }
+  t.appendChild(document.createTextNode(msg));
+  document.getElementById("toast-wrap").appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+async function api(path, method = "GET", body = null) {
+  const opts = { method, headers: {} };
+  if (TOKEN) opts.headers["Authorization"] = "Bearer " + TOKEN;
+  if (body) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const res = await fetch(API + path, opts);
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, status: res.status, data };
+}
+
+// ---------- auth ----------
+let authMode = "login";
+function switchAuth(mode) {
+  authMode = mode;
+  document.getElementById("tab-login").classList.toggle("active", mode === "login");
+  document.getElementById("tab-register").classList.toggle("active", mode === "register");
+  document.getElementById("auth-submit").textContent = mode === "login" ? "Sign in" : "Create account";
+  document.getElementById("pw-hint").style.display = mode === "register" ? "block" : "none";
+  document.getElementById("password").setAttribute("autocomplete", mode === "login" ? "current-password" : "new-password");
+}
+
+async function doAuth(e) {
+  e.preventDefault();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const path = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
+  const r = await api(path, "POST", { username, password });
+
+  if (authMode === "register") {
+    if (r.ok) { toast("Account created — you can sign in now.", r.status, true); switchAuth("login"); }
+    else { toast(r.data.error || "Registration failed", r.status, false); }
+    return false;
+  }
+  // login
+  if (r.ok && r.data.access_token) {
+    TOKEN = r.data.access_token;
+    await loadMe();
+  } else {
+    toast(r.data.error || "Login failed", r.status, false);
+  }
+  return false;
+}
+
+async function loadMe() {
+  const r = await api("/api/me");
+  if (!r.ok) { toast("Session invalid", r.status, false); logout(); return; }
+  ME = r.data;
+  document.getElementById("who").textContent = ME.username;
+  const badge = document.getElementById("role-badge");
+  badge.textContent = ME.role;
+  badge.className = "badge " + (ME.role === "admin" ? "badge-admin" : "badge-user");
+  const isAdmin = ME.role === "admin";
+  document.getElementById("nav-admin").classList.toggle("hidden", !isAdmin);
+  document.getElementById("nav-audit").classList.toggle("hidden", !isAdmin);
+  document.getElementById("login-view").style.display = "none";
+  document.getElementById("app-view").style.display = "block";
+  switchTab("notes");
+  loadNotes();
+}
+
+async function logout() {
+  if (TOKEN) { try { await api("/api/auth/logout", "POST"); } catch (e) {} }
+  TOKEN = null; ME = null;
+  document.getElementById("app-view").style.display = "none";
+  document.getElementById("login-view").style.display = "flex";
+  document.getElementById("auth-form").reset();
+}
+
+// ---------- tabs ----------
+function switchTab(tab) {
+  ["notes", "admin", "audit"].forEach(t => {
+    document.getElementById("panel-" + t).style.display = t === tab ? "block" : "none";
+    document.getElementById("nav-" + t).classList.toggle("active", t === tab);
+  });
+  if (tab === "admin") loadUsers();
+  if (tab === "audit") loadAudit();
+}
+
+// ---------- notes ----------
+async function loadNotes() {
+  const r = await api("/api/notes");
+  const box = document.getElementById("notes-list");
+  box.textContent = "";
+  if (!r.ok) { toast("Could not load notes", r.status, false); return; }
+  const notes = r.data.notes || [];
+  if (notes.length === 0) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "No notes yet. Create one above."; box.appendChild(e); return; }
+  notes.forEach(n => {
+    const row = document.createElement("div"); row.className = "note";
+    const meta = document.createElement("div"); meta.className = "meta";
+    const t = document.createElement("div"); t.className = "title"; t.textContent = n.title; // textContent = XSS-safe
+    const d = document.createElement("div"); d.className = "date"; d.textContent = n.created_at;
+    meta.appendChild(t); meta.appendChild(d);
+    const acts = document.createElement("div"); acts.className = "acts";
+    acts.appendChild(mkBtn("Open", "btn-navy btn-sm", () => openNote(n.id)));
+    acts.appendChild(mkBtn("Export", "btn-ghost btn-sm", () => exportNote(n.id)));
+    acts.appendChild(mkBtn("Delete", "btn-red btn-sm", () => delNote(n.id)));
+    row.appendChild(meta); row.appendChild(acts);
+    box.appendChild(row);
+  });
+}
+function mkBtn(label, cls, fn) { const b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+async function createNote(e) {
+  e.preventDefault();
+  const title = document.getElementById("n-title").value;
+  const content = document.getElementById("n-content").value;
+  const r = await api("/api/notes", "POST", { title, content });
+  if (r.ok) { toast("Note created & encrypted", r.status, true); document.getElementById("n-title").value = ""; document.getElementById("n-content").value = ""; loadNotes(); }
+  else { toast(r.data.error || "Failed", r.status, false); }
+  return false;
+}
+
+async function openNote(id) {
+  const r = await api("/api/notes/" + id);
+  if (!r.ok) { toast(r.data.error || "Cannot open", r.status, false); return; }
+  document.getElementById("m-title").textContent = r.data.title;
+  const body = document.getElementById("m-body"); body.textContent = "";
+  const lbl = document.createElement("label"); lbl.textContent = "Decrypted content";
+  const box = document.createElement("div"); box.className = "content-box"; box.textContent = r.data.content; // XSS-safe
+  body.appendChild(lbl); body.appendChild(box);
+  showModal();
+}
+
+async function delNote(id) {
+  const r = await api("/api/notes/" + id, "DELETE");
+  if (r.ok) { toast("Note deleted", r.status, true); loadNotes(); }
+  else { toast(r.data.error || "Failed", r.status, false); }
+}
+
+// ---------- signed export + in-browser verification ----------
+async function exportNote(id) {
+  const r = await api("/api/notes/" + id + "/export");
+  if (!r.ok) { toast(r.data.error || "Export failed", r.status, false); return; }
+  const payload = r.data;
+  document.getElementById("m-title").textContent = "Signed export — note " + id;
+  const body = document.getElementById("m-body"); body.textContent = "";
+
+  const l1 = document.createElement("label"); l1.textContent = "Signed document (" + payload.algorithm + ")";
+  const pre = document.createElement("div"); pre.className = "pre"; pre.textContent = JSON.stringify(payload, null, 2);
+  body.appendChild(l1); body.appendChild(pre);
+
+  const btnRow = document.createElement("div"); btnRow.style.marginTop = "14px"; btnRow.style.display = "flex"; btnRow.style.gap = "8px";
+  btnRow.appendChild(mkBtn("Verify signature in browser", "btn-green btn-sm", () => verifyExport(payload)));
+  btnRow.appendChild(mkBtn("Download .json", "btn-ghost btn-sm", () => download("note-" + id + "-signed.json", JSON.stringify(payload, null, 2))));
+  body.appendChild(btnRow);
+
+  const vb = document.createElement("div"); vb.className = "verify-box"; vb.id = "verify-box";
+  body.appendChild(vb);
+  showModal();
+}
+
+// Canonical JSON identical to the server's json.dumps(sort_keys, separators=(",",":"))
+function canonical(obj) {
+  if (Array.isArray(obj)) return "[" + obj.map(canonical).join(",") + "]";
+  if (obj && typeof obj === "object") {
+    return "{" + Object.keys(obj).sort().map(k => JSON.stringify(k) + ":" + canonical(obj[k])).join(",") + "}";
+  }
+  return JSON.stringify(obj);
+}
+function b64ToBytes(b64) { const bin = atob(b64); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+function pemToDer(pem) { const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""); return b64ToBytes(b64); }
+
+async function verifyExport(payload) {
+  const vb = document.getElementById("verify-box");
+  try {
+    const pk = await api("/api/public-key");
+    const der = pemToDer(pk.data.public_key);
+    const key = await crypto.subtle.importKey("spki", der.buffer, { name: "Ed25519" }, false, ["verify"]);
+    const data = new TextEncoder().encode(canonical(payload.document));
+    const sig = b64ToBytes(payload.signature);
+    const valid = await crypto.subtle.verify({ name: "Ed25519" }, key, sig, data);
+    vb.className = "verify-box " + (valid ? "verify-ok" : "verify-bad");
+    vb.textContent = valid ? "✓ VALID — signed by this server, not modified." : "✗ INVALID — signature does not match.";
+  } catch (err) {
+    vb.className = "verify-box verify-bad";
+    vb.textContent = "This browser can't verify Ed25519 here. Use the offline tool: python tools/verify_export.py export.json server_pub.pem";
+  }
+}
+function download(name, text) {
+  const blob = new Blob([text], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ---------- admin: users ----------
+async function loadUsers() {
+  const r = await api("/api/admin/users");
+  const body = document.getElementById("users-body"); body.textContent = "";
+  if (!r.ok) { toast(r.data.error || "Forbidden", r.status, false); return; }
+  (r.data.users || []).forEach(u => {
+    const tr = document.createElement("tr");
+    tr.appendChild(td(String(u.id), "mono"));
+    tr.appendChild(td(u.username));
+    // role select
+    const roleTd = document.createElement("td");
+    const sel = document.createElement("select"); sel.style.width = "100px"; sel.style.padding = "5px 8px";
+    ["user", "admin"].forEach(rn => { const o = document.createElement("option"); o.value = rn; o.textContent = rn; if (u.role === rn) o.selected = true; sel.appendChild(o); });
+    sel.disabled = (u.id === ME.id);
+    sel.onchange = () => setRole(u.id, sel.value);
+    roleTd.appendChild(sel); tr.appendChild(roleTd);
+    // status
+    const st = document.createElement("td");
+    const b = document.createElement("span"); b.className = "badge " + (u.is_locked ? "badge-user" : "badge-admin");
+    b.style.background = u.is_locked ? "#fef2f2" : "#ecfdf5"; b.style.color = u.is_locked ? "#dc2626" : "#059669";
+    b.textContent = u.is_locked ? "Locked" : "Active"; st.appendChild(b); tr.appendChild(st);
+    // actions
+    const act = document.createElement("td");
+    if (u.id !== ME.id) {
+      if (u.is_locked) act.appendChild(mkBtn("Unlock", "btn-green btn-sm", () => lockUser(u.id, false)));
+      else act.appendChild(mkBtn("Lock", "btn-red btn-sm", () => lockUser(u.id, true)));
+    } else { act.textContent = "—"; act.style.color = "#94a3b8"; }
+    tr.appendChild(act);
+    body.appendChild(tr);
+  });
+}
+function td(text, cls) { const d = document.createElement("td"); if (cls) d.className = cls; d.textContent = text; return d; }
+
+async function lockUser(id, lock) {
+  const r = await api("/api/admin/users/" + id + "/" + (lock ? "lock" : "unlock"), "POST");
+  if (r.ok) { toast(lock ? "Account locked" : "Account unlocked", r.status, true); loadUsers(); }
+  else { toast(r.data.error || "Failed", r.status, false); }
+}
+async function setRole(id, role) {
+  const r = await api("/api/admin/users/" + id + "/role", "PUT", { role });
+  if (r.ok) { toast("Role set to " + role, r.status, true); }
+  else { toast(r.data.error || "Failed", r.status, false); }
+  loadUsers();
+}
+
+// ---------- admin: audit ----------
+async function loadAudit() {
+  const r = await api("/api/admin/audit");
+  const body = document.getElementById("audit-body"); body.textContent = "";
+  if (!r.ok) { toast(r.data.error || "Forbidden", r.status, false); return; }
+  (r.data.events || []).forEach(e => {
+    const tr = document.createElement("tr");
+    tr.appendChild(td(e.created_at, "mono"));
+    tr.appendChild(td(e.user_id === null ? "—" : String(e.user_id), "mono"));
+    const ev = document.createElement("td"); const span = document.createElement("span");
+    span.className = "evt " + eventClass(e.action); span.textContent = e.action; ev.appendChild(span); tr.appendChild(ev);
+    tr.appendChild(td(e.ip || "—", "mono"));
+    body.appendChild(tr);
+  });
+}
+function eventClass(a) {
+  if (a.indexOf("idor") === 0 || a.indexOf("denied") >= 0 || a.indexOf("bruteforce") >= 0 || a.indexOf("integrity") >= 0 || a.indexOf("blocked") >= 0) return "evt-danger";
+  if (a.indexOf("lock") >= 0 || a.indexOf("failed") >= 0) return "evt-warn";
+  return "evt-ok";
+}
+
+// ---------- modal ----------
+function showModal() { document.getElementById("modal").classList.add("show"); }
+function closeModal() { document.getElementById("modal").classList.remove("show"); }
+document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+</script>
+</body>
+</html>

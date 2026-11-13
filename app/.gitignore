@@ -1,0 +1,10 @@
+.venv/
+.env
+*.db
+__pycache__/
+keys/signing_key.pem
+.coverage
+data/
+setup-devsecops.sh
+docker/nginx/certs/
+keys/jwt_ec_key.pem
