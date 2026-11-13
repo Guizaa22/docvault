@@ -1,0 +1,56 @@
+rules:
+  - id: docvault-sql-injection-request-to-execute
+    mode: taint
+    languages: [python]
+    severity: ERROR
+    message: >
+      User input reaches a SQL statement built as a string. Use a bound parameter (`?`) and pass the value
+      as the second argument of `execute()` instead of concatenating it.
+    metadata:
+      owasp: "A05:2025 Injection"
+      cwe: "CWE-89"
+      flaw: V1
+    pattern-sources:
+      - pattern: request.args.get(...)
+      - pattern: request.args[...]
+      - pattern: request.form.get(...)
+      - pattern: request.form[...]
+      - pattern: request.get_json(...)
+      - pattern: request.view_args[...]
+    pattern-sinks:
+      - patterns:
+          - pattern: $DB.execute($SQL, ...)
+          - focus-metavariable: $SQL
+    pattern-sanitizers:
+      - pattern: int(...)
+
+  - id: docvault-flask-debug-enabled
+    languages: [python]
+    severity: ERROR
+    message: >
+      `debug=True` starts the Werkzeug debugger, which exposes source code and (behind a PIN) code execution.
+      Never enable it in code; read an explicit opt-in from the environment for local work only.
+    metadata:
+      owasp: "A02:2025 Security Misconfiguration"
+      cwe: "CWE-489"
+      flaw: V5
+    pattern: $APP.run(..., debug=True, ...)
+
+  - id: docvault-traceback-in-application-code
+    languages: [python]
+    severity: WARNING
+    message: >
+      Building a traceback in request-handling code usually means it is sent to the client. Log it server
+      side (`app.logger.exception(...)`) and return a generic message with a correlation id.
+    metadata:
+      owasp: "A02:2025 Security Misconfiguration"
+      cwe: "CWE-209"
+      flaw: V5
+    pattern-either:
+      - pattern: traceback.format_exc(...)
+      - pattern: traceback.format_exception(...)
+      - pattern: traceback.print_exc(...)
+    paths:
+      exclude:
+        - "tests/"
+        - "scripts/"

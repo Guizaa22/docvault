@@ -1,0 +1,191 @@
+name: ci
+
+# Security pipeline for DocVault. Every security job is BLOCKING: a red job means the change cannot merge.
+# Policy and rationale: docs/blocking-policy.md
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: the pipeline only needs to read the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SEMGREP_VERSION: "1.185.0"
+  GITLEAKS_VERSION: "v8.30.1"
+  TRIVY_VERSION: "v0.69.3"   # known-good after the March 2026 Trivy supply-chain incident (v0.69.4+ avoided)
+
+jobs:
+  # ---------------------------------------------------------------- functional tests
+  test:
+    name: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install dependencies and generate throw-away test keys
+        working-directory: app
+        run: |
+          pip install -r requirements-dev.txt
+          python scripts/gen_keys.py keys
+      - name: Run tests
+        working-directory: app
+        run: python -m pytest -q
+
+  # ---------------------------------------------------------------- 1. SAST
+  sast:
+    name: sast (semgrep)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install Semgrep (pinned version)
+        run: pip install "semgrep==${SEMGREP_VERSION}"
+      - name: Semgrep (custom DocVault rules + Flask and OWASP Top 10 rule packs)
+        # Blocks on ERROR and WARNING findings. Tests and scripts are not part of the shipped application.
+        run: |
+          semgrep scan \
+            --config .semgrep/docvault.yml \
+            --config p/flask \
+            --config p/owasp-top-ten \
+            --severity ERROR --severity WARNING \
+            --error --metrics=off \
+            --exclude tests --exclude scripts \
+            app
+
+  # ---------------------------------------------------------------- 2. secrets (full git history)
+  secrets:
+    name: secret detection (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0            # scan the whole history: a secret removed later is still leaked
+          persist-credentials: false
+      - name: Build Gitleaks from source at a pinned version
+        # `go install` verifies the module against the public Go checksum database, so no unpinned binary
+        # or action is downloaded.
+        run: go install "github.com/gitleaks/gitleaks/v8@${GITLEAKS_VERSION}"
+      - name: Gitleaks (history and working tree)
+        run: |
+          "$(go env GOPATH)/bin/gitleaks" git . --redact --verbose --exit-code 1 --no-banner
+
+  # ---------------------------------------------------------------- 3. dependencies
+  dependencies:
+    name: dependency scan (trivy fs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trivy filesystem scan (runtime dependencies)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: fs
+          scan-ref: app
+          scanners: vuln,secret
+          skip-files: app/requirements-dev.txt
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true      # High findings block only when a fixed version exists
+          trivyignores: .trivyignore
+          exit-code: "1"
+
+  # ---------------------------------------------------------------- 4. IaC and Dockerfile
+  iac:
+    name: iac scan (trivy config)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trivy config scan (Dockerfile, Kubernetes manifests)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+          exit-code: "1"
+
+  # ---------------------------------------------------------------- 5. container image
+  image:
+    name: image scan (trivy image)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build image
+        run: docker build -t docvault-api:ci app/
+      - name: Trivy image scan (OS packages and Python packages inside the image)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+          scan-type: image
+          image-ref: docvault-api:ci
+          scanners: vuln,secret
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          exit-code: "1"
+
+  # ---------------------------------------------------------------- 6. pipeline supply chain
+  pinned-actions:
+    name: actions pinned to commit SHA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fail if any action is referenced by a mutable tag or branch
+        # Tags can be force-pushed (this is how trivy-action was compromised in March 2026).
+        run: |
+          bad=$(grep -rnE '^\s*(-\s*)?uses:' .github/workflows | grep -vE '@[0-9a-f]{40}(\s|$)' || true)
+          if [ -n "$bad" ]; then
+            echo "Actions not pinned to a full commit SHA:"; echo "$bad"; exit 1
+          fi
+          echo "All actions are pinned to full commit SHAs."
+
+  # ---------------------------------------------------------------- single required status check
+  security-gate:
+    name: security gate
+    if: always()
+    needs: [test, sast, secrets, dependencies, iac, image, pinned-actions]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to have succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then
+              echo "::error::Security gate FAILED: at least one job did not succeed"; exit 1
+            fi
+          done
+          echo "Security gate passed."
