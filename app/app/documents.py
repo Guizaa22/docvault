@@ -99,6 +99,22 @@ def upload_document():
     return jsonify(id=new_id, message="Document uploaded"), 201
 
 
+@bp.get("/documents/search")
+@login_required
+def search_documents():
+    """Search the caller's own documents by title."""
+    q = request.args.get("q", "")
+    # INTENTIONAL VULNERABILITY V1 (SQL injection, CWE-89, OWASP A05:2025).
+    # The search term is concatenated into the SQL string instead of being
+    # passed as a bound parameter. Fixed in the remediation step.
+    sql = (
+        "SELECT id, title, filename, size, created_at FROM documents "
+        "WHERE owner_id = ? AND title LIKE '%%" + q + "%%'"
+    )
+    rows = get_db().execute(sql, (g.user["id"],)).fetchall()
+    return jsonify(documents=[dict(r) for r in rows])
+
+
 @bp.get("/documents/<int:doc_id>/download")
 @login_required
 def download_document(doc_id):
