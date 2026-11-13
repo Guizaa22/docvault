@@ -118,9 +118,17 @@ def search_documents():
 @bp.get("/documents/<int:doc_id>/download")
 @login_required
 def download_document(doc_id):
-    row = _load_accessible(doc_id)
+    # INTENTIONAL VULNERABILITY V2 (IDOR / broken access control, CWE-639,
+    # OWASP A01:2025). The document is loaded by id only: nothing checks that the
+    # caller owns it or that it was shared with them. The secure version is
+    # _load_accessible(doc_id) + _not_found(doc_id). Fixed in the remediation step.
+    row = get_db().execute(
+        "SELECT id, owner_id, title, filename, mime_type, size, content_encrypted, "
+        "created_at FROM documents WHERE id = ?",
+        (doc_id,),
+    ).fetchone()
     if row is None:
-        return _not_found(doc_id)
+        return jsonify(error="Document not found"), 404
     try:
         data = decrypt_bytes(bytes(row["content_encrypted"]))
     except InvalidToken:
