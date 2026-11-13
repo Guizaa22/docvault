@@ -1,0 +1,9 @@
+# before/after sizes
+docvault-api:before                                                839b80a6816b        259MB         62.9MB        
+docvault-api:hardened                                              4b099c021e77        258MB         61.7MB   U    
+
+# hardened checks
+uid=10001(app) gid=10001(app) groups=10001(app)
+touch: cannot touch '/app/x': Read-only file system
+no curl/openssl
+health=healthy
