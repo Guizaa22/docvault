@@ -9,7 +9,7 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 | V1 | SQL injection in document search | A05 Injection | CWE-89 | Planted, not fixed |
 | V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Planted, not fixed |
 | V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Planted, not fixed |
-| V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Planned |
+| V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Planted |
 | V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489 | Planned |
 
 ---
@@ -92,3 +92,27 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
   (`git filter-repo`) and force-push, (3) re-scan the whole history to prove it is clean.
 - **Evidence:** TODO Gitleaks output in `docs/evidence/v3-gitleaks-before.txt`.
 
+
+---
+
+## V4: Vulnerable dependency (gunicorn 21.2.0)
+
+- **Where:** `app/requirements.txt`, line `gunicorn==21.2.0`. Gunicorn is the production WSGI server started by the
+  Dockerfile `CMD`, so the vulnerable code runs in every deployed container and faces the network directly.
+- **Cause:** the dependency is pinned to an old release with known CVEs instead of a maintained version. Nobody
+  scans or updates it, which is the typical supply-chain failure.
+- **Known issues (fixed in 22.0.0):** CVE-2024-1135 (HTTP request smuggling through improper `Transfer-Encoding`
+  validation, High 7.5) and CVE-2024-6827 (request smuggling via `Transfer-Encoding: chunked` handling, High 7.5);
+  `pip-audit` lists them as PYSEC-2026-1433 and PYSEC-2026-1434.
+- **Impact:** when gunicorn sits behind a proxy or ingress, a crafted request can be interpreted differently by the
+  two components. That allows bypassing front-end access rules, poisoning shared connections and reaching routes
+  that should be blocked.
+- **Exploitation:** not exploited here. The finding is proven by scanning, which is how the pipeline sees it:
+  ```bash
+  pip-audit -r app/requirements.txt --no-deps --disable-pip
+  ```
+- **Detection plan:** dependency scan (pip-audit and Trivy `fs`) plus Trivy on the built image, both blocking.
+  Policy: fail on Critical, or on High when a fixed version exists (see `docs/blocking-policy.md`).
+- **Planned fix:** upgrade to `gunicorn>=22.0.0`, then re-run the scans to prove the finding is gone. Longer term,
+  pin with hashes and enable automated update PRs.
+- **Evidence:** TODO `docs/evidence/v4-pip-audit-before.txt`.
