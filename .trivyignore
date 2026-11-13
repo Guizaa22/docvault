@@ -1,0 +1,4 @@
+# Accepted risks for the Trivy jobs. Policy (docs/blocking-policy.md): every entry needs a written reason
+# and an expiry date, after which the finding blocks the pipeline again. Format:
+#   CVE-YYYY-NNNN exp:YYYY-MM-DD   # reason, owner
+# Currently empty: nothing is accepted.
