@@ -1,15 +1,18 @@
 """Credentials and helpers for the third-party backup service.
 
-INTENTIONAL VULNERABILITY V3 (hardcoded secret, CWE-798, OWASP A07:2025).
-The API key below is committed in the source code. It is a FAKE value made up
-for this school project (the host is the reserved .invalid domain, so no real
-service exists), but it is shaped like a real production key on purpose.
-Fixed in the remediation step: the key moves to a runtime secret.
+V3 (hardcoded secret, CWE-798, OWASP A07:2025) was fixed here: the API key is
+no longer in the source code. It is read from the BACKUP_SERVICE_API_KEY
+environment variable at call time, and the job fails loudly if it is missing.
+The key committed earlier is considered burned (revoked first), see
+docs/vulnerabilities.md for the rotation record.
 """
+import os
 
 BACKUP_SERVICE_URL = "https://backup.docvault.invalid/v1/documents"
-BACKUP_SERVICE_API_KEY = "dvk_live_7Hq3ZxK9mWcT2vRb8LdYp5NfJ4sGa6UeXo1Ci0Vh"
 
 
 def backup_headers():
-    return {"Authorization": f"Bearer {BACKUP_SERVICE_API_KEY}"}
+    key = os.environ.get("BACKUP_SERVICE_API_KEY")
+    if not key:
+        raise RuntimeError("Missing required secret: BACKUP_SERVICE_API_KEY")
+    return {"Authorization": f"Bearer {key}"}
