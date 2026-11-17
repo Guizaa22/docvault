@@ -1,0 +1,9 @@
+# Deny ALL traffic to and from every pod in the namespace. Everything else is an explicit exception.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: docvault
+spec:
+  podSelector: {}            # empty selector = every pod in this namespace
+  policyTypes: [Ingress, Egress]
