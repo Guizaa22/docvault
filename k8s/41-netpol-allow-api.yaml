@@ -1,0 +1,19 @@
+# The only allowed path: pods labelled role=api-client in the "clients" namespace -> DocVault port 5000.
+# namespaceSelector and podSelector sit in the SAME list item, so BOTH must match (AND).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-from-clients
+  namespace: docvault
+spec:
+  podSelector:
+    matchLabels: {app: docvault}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: clients}
+          podSelector:
+            matchLabels: {role: api-client}
+      ports:
+        - {protocol: TCP, port: 5000}
