@@ -19,7 +19,6 @@ def test_server_error_returns_json_500(boom_client):
     assert r.get_json()["error"] == "Internal server error"
 
 
-@pytest.mark.xfail(strict=True, reason="V5: 500 responses leak exception details and stack trace")
 def test_server_error_does_not_leak_details(boom_client):
     r = boom_client.get("/api/_boom")
     body = r.get_data(as_text=True)

@@ -104,31 +104,25 @@ def upload_document():
 def search_documents():
     """Search the caller's own documents by title."""
     q = request.args.get("q", "")
-    # INTENTIONAL VULNERABILITY V1 (SQL injection, CWE-89, OWASP A05:2025).
-    # The search term is concatenated into the SQL string instead of being
-    # passed as a bound parameter. Fixed in the remediation step.
-    sql = (
+    # Fix for V1: the term is a bound parameter, never part of the SQL text. LIKE wildcards typed by
+    # the user are escaped so they match literally.
+    pattern = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    rows = get_db().execute(
         "SELECT id, title, filename, size, created_at FROM documents "
-        "WHERE owner_id = ? AND title LIKE '%%" + q + "%%'"
-    )
-    rows = get_db().execute(sql, (g.user["id"],)).fetchall()
+        "WHERE owner_id = ? AND title LIKE ? ESCAPE '\\'",
+        (g.user["id"], pattern),
+    ).fetchall()
     return jsonify(documents=[dict(r) for r in rows])
 
 
 @bp.get("/documents/<int:doc_id>/download")
 @login_required
 def download_document(doc_id):
-    # INTENTIONAL VULNERABILITY V2 (IDOR / broken access control, CWE-639,
-    # OWASP A01:2025). The document is loaded by id only: nothing checks that the
-    # caller owns it or that it was shared with them. The secure version is
-    # _load_accessible(doc_id) + _not_found(doc_id). Fixed in the remediation step.
-    row = get_db().execute(
-        "SELECT id, owner_id, title, filename, mime_type, size, content_encrypted, "
-        "created_at FROM documents WHERE id = ?",
-        (doc_id,),
-    ).fetchone()
+    # Fix for V2: only the owner or a user the document was shared with can download it.
+    # Anyone else gets the same 404 as for a missing id, so ids cannot be probed.
+    row = _load_accessible(doc_id)
     if row is None:
-        return jsonify(error="Document not found"), 404
+        return _not_found(doc_id)
     try:
         data = decrypt_bytes(bytes(row["content_encrypted"]))
     except InvalidToken:
