@@ -1,0 +1,8 @@
+# DocVault never needs to talk to the Kubernetes API, so its identity gets NO permissions:
+# a dedicated ServiceAccount, no Role, no RoleBinding, and no API token mounted into the pod.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: docvault
+  namespace: docvault
+automountServiceAccountToken: false

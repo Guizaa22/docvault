@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docvault
+  namespace: docvault
+  labels: {app: docvault}
+spec:
+  replicas: 1                    # SQLite + emptyDir: one replica only (data is lost when the pod is replaced)
+  selector:
+    matchLabels: {app: docvault}
+  template:
+    metadata:
+      labels: {app: docvault}
+    spec:
+      serviceAccountName: docvault
+      automountServiceAccountToken: false
+      securityContext:           # pod level
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001           # makes the emptyDir volumes writable for UID 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: api
+          image: docvault-api:k8s          # loaded into kind with `kind load docker-image` (never :latest)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - {name: http, containerPort: 5000}
+          env:
+            - name: JWT_SECRET
+              valueFrom: {secretKeyRef: {name: docvault-secrets, key: JWT_SECRET}}
+            - name: FERNET_KEY
+              valueFrom: {secretKeyRef: {name: docvault-secrets, key: FERNET_KEY}}
+          securityContext:         # container level
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          readinessProbe:
+            httpGet: {path: /api/health, port: http}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /api/health, port: http}
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          volumeMounts:
+            - {name: data, mountPath: /app/data}   # the only writable application path
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: data, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}
