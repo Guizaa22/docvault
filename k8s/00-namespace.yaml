@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: docvault
+  labels:
+    # Pod Security Admission (built into Kubernetes): the API server REFUSES pods that break the
+    # "restricted" profile (root, privilege escalation, missing seccomp, extra capabilities...).
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
