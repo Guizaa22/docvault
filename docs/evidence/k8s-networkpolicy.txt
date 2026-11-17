@@ -1,0 +1,23 @@
+== A. BEFORE any policy: the unlabelled intruder CAN reach the API ==
+{"status":"ok"}
+warning: couldn't attach to pod/intruder, falling back to streaming logs: unable to upgrade connection: container intruder not found in pod intruder_clients
+{"status":"ok"}
+
+== B. default-deny applied: the intruder is blocked (expect a timeout) ==
+networkpolicy.networking.k8s.io/default-deny-all created
+wget: download timed out
+pod clients/intruder terminated (Error)
+
+== C. allow rule applied: labelled client works, unlabelled intruder still blocked ==
+networkpolicy.networking.k8s.io/allow-api-from-clients created
+-- allowed client:
+{"status":"ok"}
+warning: couldn't attach to pod/allowed, falling back to streaming logs: unable to upgrade connection: container allowed not found in pod allowed_clients
+{"status":"ok"}
+-- intruder:
+wget: download timed out
+pod clients/intruder2 terminated (Error)
+
+== D. the API pod is still healthy (kubelet probes not broken by the deny) ==
+NAME                       READY   STATUS    RESTARTS   AGE
+docvault-789595957-j9nb4   1/1     Running   0          9m48s
