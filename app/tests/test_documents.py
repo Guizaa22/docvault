@@ -42,7 +42,6 @@ def test_content_is_encrypted_in_database(app, client):
     assert b"plaintext-marker" not in bytes(row["content_encrypted"])
 
 
-@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_idor_other_user_gets_404_on_download(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)
@@ -58,7 +57,6 @@ def test_idor_other_user_cannot_delete(client):
     assert client.get(f"/api/documents/{doc_id}/download", headers=auth(alice)).status_code == 200
 
 
-@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_admin_cannot_read_user_document(client):
     alice = token_for(client, *ALICE)
     admin = token_for(client, *ADMIN)
@@ -66,7 +64,6 @@ def test_admin_cannot_read_user_document(client):
     assert client.get(f"/api/documents/{doc_id}/download", headers=auth(admin)).status_code == 404
 
 
-@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_idor_attempt_is_audited(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)
@@ -88,7 +85,6 @@ def test_share_grants_read_access_and_lists_shared_document(client):
     assert [d["id"] for d in listed] == [doc_id] and listed[0]["owned"] is False
 
 
-@pytest.mark.xfail(strict=True, reason="V2: IDOR on /api/documents/<id>/download (intentional; fixed in the remediation step)")
 def test_unshare_revokes_download_access(client):
     alice = token_for(client, *ALICE)
     bob = token_for(client, *BOB)

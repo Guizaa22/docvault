@@ -40,10 +40,6 @@ def test_search_requires_login(client):
     assert client.get("/api/documents/search?q=x").status_code == 401
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="V1: SQL injection in /api/documents/search (intentional; fixed in the remediation step)",
-)
 def test_search_is_not_injectable(client):
     """Secure behaviour we want. Fails today, so it is marked xfail (strict):
     once V1 is fixed it passes, and the strict marker forces us to remove it."""

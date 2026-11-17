@@ -6,11 +6,11 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 
 | ID | Flaw | OWASP 2025 | CWE | Status |
 |----|------|-----------|-----|--------|
-| V1 | SQL injection in document search | A05 Injection | CWE-89 | Planted, not fixed |
-| V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Planted, not fixed |
+| V1 | SQL injection in document search | A05 Injection | CWE-89 | Fixed (parameterised query) |
+| V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Fixed (owner or share check) |
 | V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Planted, not fixed |
-| V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Planted |
-| V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489, CWE-209 | Planted |
+| V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Fixed (gunicorn 23.0.0) |
+| V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489, CWE-209 | Fixed (generic error + id, debug off) |
 
 ---
 
@@ -140,3 +140,17 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
   `DOCVAULT_DEBUG` to off, remove `debug=True` from `run.py`, and send logs to Loki. The strict xfail test
   `test_server_error_does_not_leak_details` flips when this lands.
 - **Evidence:** TODO `docs/evidence/v5-verbose-error-before.txt` (curl output).
+
+---
+
+## Remediation log (V1, V2, V4, V5)
+
+| Flaw | Fix | Proof |
+|---|---|---|
+| V1 | `search_documents` uses a bound `LIKE ?` parameter, with `%`/`_` escaped | strict xfail test `test_search_is_not_injectable` now passes (marker removed); Semgrep rule silent |
+| V2 | `download_document` uses `_load_accessible`; non-owners get the same 404 as a missing id | the four former xfail tests in `test_documents.py` pass |
+| V4 | `gunicorn` 21.2.0 to 23.0.0 | `pip-audit`: "No known vulnerabilities found" |
+| V5 | 500 handler logs server side and returns only a generic message with `error_id`; `run.py` debug only with `DOCVAULT_DEBUG=1` | `test_server_error_does_not_leak_details` passes; Semgrep rules silent |
+
+Result: 39 passed, 0 xfailed. V3 is fixed separately (secrets procedure: revoke first, purge after).
+Re-run the "before" exploits against the fixed app and save as `docs/evidence/*-after.txt`.

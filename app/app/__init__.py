@@ -1,5 +1,5 @@
 import os
-import traceback
+import uuid
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify
@@ -87,18 +87,12 @@ def create_app(test_config=None):
 
     @app.errorhandler(500)
     def server_error(e):
-        # INTENTIONAL VULNERABILITY V5: debug output is on by default and the 500 handler
-        # returns the exception type, message and full stack trace to the client.
-        if os.environ.get("DOCVAULT_DEBUG", "1") == "1":
-            original = getattr(e, "original_exception", None) or e
-            return jsonify(
-                error="Internal server error",
-                exception=type(original).__name__,
-                message=str(original),
-                trace=traceback.format_exception(original),
-                database=app.config["DATABASE"],
-            ), 500
-        return jsonify(error="Internal server error"), 500
+        # Fix for V5: details go to the server log only; the client gets a generic message and a
+        # correlation id that support can look up in the logs.
+        error_id = uuid.uuid4().hex[:12]
+        original = getattr(e, "original_exception", None) or e
+        app.logger.error("unhandled error id=%s", error_id, exc_info=original)
+        return jsonify(error="Internal server error", error_id=error_id), 500
 
     @app.after_request
     def set_security_headers(response):
