@@ -1,0 +1,10 @@
+== A. compliant pod is ADMITTED ==
+pod/good-test created
+
+== B. pod with ':latest' and no limits is DENIED by Kyverno ==
+Error from server: error when creating "k8s/tests/bad-pod.yaml": admission webhook "vpol.validate.kyverno.svc-fail" denied the request: Policy disallow-latest-tag failed: Images must use an explicit tag or a digest, and never ':latest'.; Policy require-resource-limits failed: Every container must set CPU and memory limits.
+
+== C. the real DocVault pod is untouched ==
+NAME                       READY   STATUS              RESTARTS   AGE
+docvault-789595957-j9nb4   1/1     Running             0          33m
+good-test                  0/1     ContainerCreating   0          0s

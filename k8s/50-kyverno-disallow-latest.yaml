@@ -1,0 +1,19 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationActions: [Deny]
+  matchConstraints:
+    namespaceSelector:
+      matchLabels: {kubernetes.io/metadata.name: docvault}
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c,
+          c.image.matches('(@sha256:[a-f0-9]{64}|:[^/:@]+)$') && !c.image.matches(':latest$'))
+      message: "Images must use an explicit tag or a digest, and never ':latest'."
