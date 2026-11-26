@@ -100,6 +100,11 @@ def create_app(test_config=None):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
+        # ZAP finding F1 (Cross-Origin-Resource-Policy missing): other sites may not load our responses.
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        if response.mimetype == "application/json":
+            # API responses never need to run scripts or be framed.
+            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         return response
 
     app.wsgi_app = ServerHeaderMiddleware(app.wsgi_app)

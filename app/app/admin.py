@@ -21,7 +21,7 @@ def _set_lock(user_id, locked):
         return jsonify(error="You cannot lock your own account"), 400
     db = get_db()
     cur = db.execute(
-        "UPDATE users SET is_locked = ?, failed_attempts = 0 WHERE id = ?",
+        "UPDATE users SET is_locked = ?, failed_attempts = 0, locked_until = NULL WHERE id = ?",
         (int(locked), user_id),
     )
     db.commit()

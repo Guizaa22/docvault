@@ -14,6 +14,7 @@ from .audit import log_event
 from .db import get_db, insert_returning_id, integrity_errors
 from .security import login_required
 from .jwt_keys import private_key, kid
+from .limiter import limiter
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 ph = PasswordHasher()
@@ -21,6 +22,10 @@ ph = PasswordHasher()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
 DUMMY_HASH = ph.hash("dummy-password-for-timing")
 MAX_FAILED_ATTEMPTS = 5
+# ZAP finding F2 (account lockout DoS): brute-force lockout is TEMPORARY. A permanent lock let anyone
+# who knows a username lock that user out forever by sending wrong passwords. Only an administrator
+# lock (is_locked) is permanent.
+LOCKOUT_MINUTES = 15
 REFRESH_TTL_DAYS = 7
 
 
@@ -56,6 +61,7 @@ def _issue_refresh_token(db, user_id):
 
 
 @bp.post("/register")
+@limiter.limit("5 per minute")
 def register():
     data = request.get_json(silent=True) or {}
     username = data.get("username", "")
@@ -83,6 +89,7 @@ def register():
 
 
 @bp.post("/login")
+@limiter.limit("10 per minute")  # per client IP: slows password guessing and lockout abuse
 def login():
     data = request.get_json(silent=True) or {}
     username = data.get("username", "")
@@ -92,19 +99,26 @@ def login():
 
     db = get_db()
     user = db.execute(
-        "SELECT id, password_hash, is_locked, failed_attempts FROM users WHERE username = ?",
+        "SELECT id, password_hash, is_locked, failed_attempts, locked_until FROM users WHERE username = ?",
         (username,),
     ).fetchone()
+
+    now = datetime.now(timezone.utc)
+    temp_locked = bool(
+        user is not None and user["locked_until"]
+        and datetime.fromisoformat(user["locked_until"]) > now
+    )
 
     try:
         ph.verify(user["password_hash"] if user else DUMMY_HASH, password)
     except VerifyMismatchError:
-        if user is not None:
+        if user is not None and not temp_locked:
             attempts = user["failed_attempts"] + 1
             if attempts >= MAX_FAILED_ATTEMPTS:
+                until = (now + timedelta(minutes=LOCKOUT_MINUTES)).isoformat()
                 db.execute(
-                    "UPDATE users SET failed_attempts = ?, is_locked = 1 WHERE id = ?",
-                    (attempts, user["id"]),
+                    "UPDATE users SET failed_attempts = 0, locked_until = ? WHERE id = ?",
+                    (until, user["id"]),
                 )
                 log_event("account_locked_bruteforce", user["id"])
             else:
@@ -126,7 +140,11 @@ def login():
         log_event("login_blocked_locked", user["id"])
         return jsonify(error="Account locked, contact an administrator"), 403
 
-    db.execute("UPDATE users SET failed_attempts = 0 WHERE id = ?", (user["id"],))
+    if temp_locked:
+        log_event("login_blocked_temporary_lock", user["id"])
+        return jsonify(error=f"Too many failed attempts, try again in {LOCKOUT_MINUTES} minutes"), 429
+
+    db.execute("UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?", (user["id"],))
     db.commit()
 
     access = _make_access_token(user["id"])
