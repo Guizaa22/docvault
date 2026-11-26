@@ -8,7 +8,7 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
 |----|------|-----------|-----|--------|
 | V1 | SQL injection in document search | A05 Injection | CWE-89 | Fixed (parameterised query) |
 | V2 | IDOR on document download | A01 Broken Access Control | CWE-639 | Fixed (owner or share check) |
-| V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Planted, not fixed |
+| V3 | Hardcoded secret in source | A07 Authentication Failures | CWE-798 | Fixed |
 | V4 | Vulnerable dependency | A03 Software Supply Chain Failures | CWE-1395 | Fixed (gunicorn 23.0.0) |
 | V5 | Debug mode / verbose errors | A02 Security Misconfiguration | CWE-489, CWE-209 | Fixed (generic error + id, debug off) |
 
@@ -90,7 +90,16 @@ References use **OWASP Top 10:2025** (the edition in force). Evidence (screensho
   startup if missing, and add a pre-commit/CI secret scan. Then run the incident procedure **revoke first, purge
   after**: (1) rotate the key at the service so the leaked value is dead, (2) only then rewrite git history
   (`git filter-repo`) and force-push, (3) re-scan the whole history to prove it is clean.
-- **Evidence:** TODO Gitleaks output in `docs/evidence/v3-gitleaks-before.txt`.
+- **Evidence:** before: `docs/evidence/v3-gitleaks-before.txt`; after: `docs/evidence/v3-gitleaks-after.txt`.
+- **Remediation record (2026-11-26):**
+  1. *Revoke first:* the committed key `dvk_live_…` is declared burned. In a real incident it is rotated at the
+     provider before anything else; here the service is fake (`.invalid`), so the rotation is simulated.
+  2. *Fix the code:* `integrations.py` now reads `BACKUP_SERVICE_API_KEY` from the environment and fails if it is
+     missing; tests in `app/tests/test_integrations.py`.
+  3. *Purge after:* history rewritten with `git filter-repo --replace-text`, force-pushed, old branches deleted.
+  4. *Prove it:* Gitleaks over the full history reports no leaks; the key string is in 0 commits.
+  - *Limit:* closed PR pages on GitHub keep their original commits; only GitHub Support can purge those. This is
+    why revocation, not deletion, is what actually makes a leaked secret harmless.
 
 
 ---
