@@ -1,0 +1,50 @@
+# Minimal OpenAPI description of the DocVault API, written so ZAP knows every endpoint and parameter.
+# A JSON API has no links for a spider to follow: without this file ZAP would only see "/".
+openapi: 3.0.3
+info: {title: DocVault API, version: "1.0"}
+servers: [{url: "http://localhost:5000"}]
+components:
+  securitySchemes:
+    bearer: {type: http, scheme: bearer}
+security: [{bearer: []}]
+paths:
+  /api/health: {get: {security: [], responses: {"200": {description: ok}}}}
+  /api/public-key: {get: {security: [], responses: {"200": {description: ok}}}}
+  /.well-known/jwks.json: {get: {security: [], responses: {"200": {description: ok}}}}
+  /api/auth/register:
+    post:
+      security: []
+      requestBody: {content: {application/json: {schema: {type: object, properties: {username: {type: string, example: zapprobe}, password: {type: string, example: probe-passphrase-123}}}}}}
+      responses: {"201": {description: created}}
+  /api/auth/login:
+    post:
+      security: []
+      requestBody: {content: {application/json: {schema: {type: object, properties: {username: {type: string, example: zapuser}, password: {type: string, example: wrong-password}}}}}}
+      responses: {"200": {description: ok}}
+  /api/me: {get: {responses: {"200": {description: ok}}}}
+  /api/documents:
+    get: {responses: {"200": {description: ok}}}
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema: {type: object, properties: {title: {type: string, example: note}, file: {type: string, format: binary}}}
+      responses: {"201": {description: created}}
+  /api/documents/search:
+    get:
+      parameters: [{name: q, in: query, schema: {type: string, example: report}}]
+      responses: {"200": {description: ok}}
+  /api/documents/{doc_id}/download:
+    get:
+      parameters: [{name: doc_id, in: path, required: true, schema: {type: integer, example: 1}}]
+      responses: {"200": {description: ok}}
+  /api/documents/{doc_id}/shares:
+    get:
+      parameters: [{name: doc_id, in: path, required: true, schema: {type: integer, example: 1}}]
+      responses: {"200": {description: ok}}
+    post:
+      parameters: [{name: doc_id, in: path, required: true, schema: {type: integer, example: 1}}]
+      requestBody: {content: {application/json: {schema: {type: object, properties: {username: {type: string, example: someone}}}}}}
+      responses: {"201": {description: created}}
+  /api/admin/users: {get: {responses: {"200": {description: ok}}}}
+  /api/admin/audit: {get: {responses: {"200": {description: ok}}}}
