@@ -9,7 +9,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | --- | --- |
 | High | 0 |
 | Medium | 0 |
-| Low | 2 |
+| Low | 1 |
 | Informational | 3 |
 
 
@@ -27,7 +27,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Info | Informational | http://localhost:5000 | Percentage of endpoints with method GET | 72 % |
 | Info | Informational | http://localhost:5000 | Percentage of endpoints with method POST | 27 % |
 | Info | Informational | http://localhost:5000 | Count of total endpoints | 54    |
-| Info | Exceeded Low | http://localhost:5000 | Percentage of slow responses | 36 % |
+| Info | Informational | http://localhost:5000 | Percentage of slow responses | 1 % |
 
 
 
@@ -39,9 +39,8 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Name | Risk Level | Number of Instances |
 | --- | --- | --- |
-| Cross-Origin-Resource-Policy Header Missing or Invalid | Low | Systemic |
 | Unexpected Content-Type was returned | Low | 2 |
-| A Client Error response code was returned by the server | Informational | 46 |
+| A Client Error response code was returned by the server | Informational | 48 |
 | Authentication Request Identified | Informational | 1 |
 | Non-Storable Content | Informational | Systemic |
 
@@ -51,75 +50,6 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 ## Alert Detail
 
 
-
-### [ Cross-Origin-Resource-Policy Header Missing or Invalid ](https://www.zaproxy.org/docs/alerts/90004/)
-
-
-
-##### Low (Medium)
-
-### Description
-
-Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.
-
-* URL: http://localhost:5000/api/documents/1/download
-  * Node Name: `http://localhost:5000/api/documents/1/download`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Resource-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: http://localhost:5000/api/documents/1/shares
-  * Node Name: `http://localhost:5000/api/documents/1/shares`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Resource-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: http://localhost:5000/api/health
-  * Node Name: `http://localhost:5000/api/health`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Resource-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: http://localhost:5000/api/me
-  * Node Name: `http://localhost:5000/api/me`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Resource-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: http://localhost:5000/api/public-key
-  * Node Name: `http://localhost:5000/api/public-key`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Resource-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-
-Instances: Systemic
-
-
-### Solution
-
-Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.
-'same-site' is considered as less secured and should be avoided.
-If resources must be shared, set the header to 'cross-origin'.
-If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).
-
-### Reference
-
-
-* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy)
-
-
-#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
-
-
-#### WASC Id: 14
-
-#### Source ID: 3
 
 ### [ Unexpected Content-Type was returned ](https://www.zaproxy.org/docs/alerts/100001/)
 
@@ -188,8 +118,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/.well-known/2590974245045396944
-  * Node Name: `http://localhost:5000/.well-known/2590974245045396944`
+* URL: http://localhost:5000/.well-known/6358851257558467963
+  * Node Name: `http://localhost:5000/.well-known/6358851257558467963`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -202,8 +132,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/6425074753265495367
-  * Node Name: `http://localhost:5000/6425074753265495367`
+* URL: http://localhost:5000/8279675052596423557
+  * Node Name: `http://localhost:5000/8279675052596423557`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -223,8 +153,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/api/2982553959890548850
-  * Node Name: `http://localhost:5000/api/2982553959890548850`
+* URL: http://localhost:5000/api/5470859027219818562
+  * Node Name: `http://localhost:5000/api/5470859027219818562`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -244,8 +174,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/api/admin/460968335864574219
-  * Node Name: `http://localhost:5000/api/admin/460968335864574219`
+* URL: http://localhost:5000/api/admin/3279906842800148419
+  * Node Name: `http://localhost:5000/api/admin/3279906842800148419`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -293,8 +223,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/api/auth/1087156635180023556
-  * Node Name: `http://localhost:5000/api/auth/1087156635180023556`
+* URL: http://localhost:5000/api/auth/7746359200845721631
+  * Node Name: `http://localhost:5000/api/auth/7746359200845721631`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -328,8 +258,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/api/documents/1/3711806543741001327
-  * Node Name: `http://localhost:5000/api/documents/1/3711806543741001327`
+* URL: http://localhost:5000/api/documents/1/3743437199009223986
+  * Node Name: `http://localhost:5000/api/documents/1/3743437199009223986`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -349,8 +279,8 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `404`
   * Other Info: ``
-* URL: http://localhost:5000/api/documents/2816734073523161122
-  * Node Name: `http://localhost:5000/api/documents/2816734073523161122`
+* URL: http://localhost:5000/api/documents/5241487735091196597
+  * Node Name: `http://localhost:5000/api/documents/5241487735091196597`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -391,6 +321,13 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Attack: ``
   * Evidence: `401`
   * Other Info: ``
+* URL: http://localhost:5000/api/auth/login
+  * Node Name: `http://localhost:5000/api/auth/login ()({username,password})`
+  * Method: `POST`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `429`
+  * Other Info: ``
 * URL: http://localhost:5000/api/auth/login/
   * Node Name: `http://localhost:5000/api/auth/login/ ()({username,password})`
   * Method: `POST`
@@ -411,6 +348,13 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Parameter: ``
   * Attack: ``
   * Evidence: `409`
+  * Other Info: ``
+* URL: http://localhost:5000/api/auth/register
+  * Node Name: `http://localhost:5000/api/auth/register ()({username,password})`
+  * Method: `POST`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `429`
   * Other Info: ``
 * URL: http://localhost:5000/api/auth/register/
   * Node Name: `http://localhost:5000/api/auth/register/ ()({username,password})`
@@ -498,7 +442,7 @@ Raised by the 'Alert on HTTP Response Code Error' script
   * Other Info: ``
 
 
-Instances: 46
+Instances: 48
 
 ### Solution
 
@@ -561,6 +505,13 @@ This is an informational alert rather than a vulnerability and so there is nothi
 
 The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.
 
+* URL: http://localhost:5000/.well-known/jwks.json
+  * Node Name: `http://localhost:5000/.well-known/jwks.json`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `no-store`
+  * Other Info: ``
 * URL: http://localhost:5000/api/documents/1/shares
   * Node Name: `http://localhost:5000/api/documents/1/shares`
   * Method: `GET`
@@ -575,22 +526,15 @@ The response contents are not storable by caching components such as proxy serve
   * Attack: ``
   * Evidence: `no-store`
   * Other Info: ``
-* URL: http://localhost:5000/api/me
-  * Node Name: `http://localhost:5000/api/me`
+* URL: http://localhost:5000/api/public-key
+  * Node Name: `http://localhost:5000/api/public-key`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `no-store`
   * Other Info: ``
-* URL: http://localhost:5000/api/auth/register
-  * Node Name: `http://localhost:5000/api/auth/register ()({username,password})`
-  * Method: `POST`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `no-store`
-  * Other Info: ``
-* URL: http://localhost:5000/api/documents
-  * Node Name: `http://localhost:5000/api/documents ()(multipart:title,file)`
+* URL: http://localhost:5000/api/auth/login
+  * Node Name: `http://localhost:5000/api/auth/login ()({username,password})`
   * Method: `POST`
   * Parameter: ``
   * Attack: ``
