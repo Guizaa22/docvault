@@ -19,7 +19,7 @@ paths:
   /api/auth/login:
     post:
       security: []
-      requestBody: {content: {application/json: {schema: {type: object, properties: {username: {type: string, example: zapuser}, password: {type: string, example: wrong-password}}}}}}
+      requestBody: {content: {application/json: {schema: {type: object, properties: {username: {type: string, example: nonexistent-user}, password: {type: string, example: wrong-password}}}}}}
       responses: {"200": {description: ok}}
   /api/me: {get: {responses: {"200": {description: ok}}}}
   /api/documents:
