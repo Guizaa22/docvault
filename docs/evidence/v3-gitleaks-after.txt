@@ -1,8 +1,7 @@
-== V3 after: gitleaks over the FULL git history (after filter-repo purge) ==
+== V3 after: gitleaks over the FULL history of a fresh clone of GitHub (after filter-repo purge) ==
+[90m5:26PM[0m [32mINF[0m [1m28 commits scanned.[0m
+[90m5:26PM[0m [32mINF[0m [1mscanned ~192228 bytes (192.23 KB) in 170ms[0m
+[90m5:26PM[0m [32mINF[0m [1mno leaks found[0m
 
-[90m5:19PM[0m [32mINF[0m [1m51 commits scanned.[0m
-[90m5:19PM[0m [32mINF[0m [1mscanned ~378176 bytes (378.18 KB) in 192ms[0m
-[90m5:19PM[0m [33mWRN[0m [1mleaks found: 1[0m
-
-== key string present in any commit? ==
-2
+== commits containing the key string ==
+0
