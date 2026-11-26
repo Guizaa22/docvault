@@ -1,0 +1,783 @@
+{
+	"@programName": "ZAP",
+	"@version": "2.17.0",
+	"@generated": "Thu, 26 Nov 2026 19:36:55",
+	"created": "2026-11-26T19:36:55.705675597Z",
+	"insights":[
+		{
+			"level": "Medium",
+			"reason": "Exceeded High",
+			"site": "http://localhost:5000",
+			"key": "insight.code.4xx",
+			"description": "Percentage of responses with status code 4xx",
+			"statistic": "88"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.code.2xx",
+			"description": "Percentage of responses with status code 2xx",
+			"statistic": "11"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.ctype.application/json",
+			"description": "Percentage of endpoints with content type application/json",
+			"statistic": "96"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.ctype.text/html",
+			"description": "Percentage of endpoints with content type text/html",
+			"statistic": "1"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.ctype.text/plain",
+			"description": "Percentage of endpoints with content type text/plain",
+			"statistic": "1"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.method.GET",
+			"description": "Percentage of endpoints with method GET",
+			"statistic": "72"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.method.POST",
+			"description": "Percentage of endpoints with method POST",
+			"statistic": "27"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://localhost:5000",
+			"key": "insight.endpoint.total",
+			"description": "Count of total endpoints",
+			"statistic": "54"
+		},
+		{
+			"level": "Info",
+			"reason": "Exceeded Low",
+			"site": "http://localhost:5000",
+			"key": "insight.response.slow",
+			"description": "Percentage of slow responses",
+			"statistic": "36"
+		}
+	],
+	"site":[ 
+		{
+			"@name": "http://localhost:5000",
+			"@host": "localhost",
+			"@port": "5000",
+			"@ssl": "false",
+			"alerts": [ 
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-1",
+					"alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
+					"instances":[ 
+						{
+							"id": "61",
+							"uri": "http://localhost:5000/api/documents/1/download",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/download",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "56",
+							"uri": "http://localhost:5000/api/documents/1/shares",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/shares",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "53",
+							"uri": "http://localhost:5000/api/health",
+							"nodeName": "http:\/\/localhost:5000\/api\/health",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "59",
+							"uri": "http://localhost:5000/api/me",
+							"nodeName": "http:\/\/localhost:5000\/api\/me",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "64",
+							"uri": "http://localhost:5000/api/public-key",
+							"nodeName": "http:\/\/localhost:5000\/api\/public-key",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "15"
+				},
+				{
+					"pluginid": "100001",
+					"alertRef": "100001",
+					"alert": "Unexpected Content-Type was returned",
+					"name": "Unexpected Content-Type was returned",
+					"riskcode": "1",
+					"confidence": "3",
+					"riskdesc": "Low (High)",
+					"desc": "<p>A Content-Type of text/html was returned by the server.</p><p>This is not one of the types expected to be returned by an API.</p><p>Raised by the 'Alert on Unexpected Content Types' script</p>",
+					"instances":[ 
+						{
+							"id": "13",
+							"uri": "http://localhost:5000",
+							"nodeName": "http:\/\/localhost:5000",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "text/html",
+							"otherinfo": ""
+						},
+						{
+							"id": "1023",
+							"uri": "http://localhost:5000/",
+							"nodeName": "http:\/\/localhost:5000\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "text/html",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "",
+					"cweid": "-1",
+					"wascid": "-1",
+					"sourceid": "36"
+				},
+				{
+					"pluginid": "100000",
+					"alertRef": "100000-1",
+					"alert": "A Client Error response code was returned by the server",
+					"name": "A Client Error response code was returned by the server",
+					"riskcode": "0",
+					"confidence": "3",
+					"riskdesc": "Informational (High)",
+					"desc": "<p>A response code of 404 was returned by the server.</p><p>This may indicate that the application is failing to handle unexpected input correctly.</p><p>Raised by the 'Alert on HTTP Response Code Error' script</p>",
+					"instances":[ 
+						{
+							"id": "14",
+							"uri": "http://localhost:5000/.well-known",
+							"nodeName": "http:\/\/localhost:5000\/.well-known",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1024",
+							"uri": "http://localhost:5000/.well-known/",
+							"nodeName": "http:\/\/localhost:5000\/.well-known\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7",
+							"uri": "http://localhost:5000/.well-known/2590974245045396944",
+							"nodeName": "http:\/\/localhost:5000\/.well-known\/2590974245045396944",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1026",
+							"uri": "http://localhost:5000/.well-known/jwks.json/",
+							"nodeName": "http:\/\/localhost:5000\/.well-known\/jwks.json\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "6",
+							"uri": "http://localhost:5000/6425074753265495367",
+							"nodeName": "http:\/\/localhost:5000\/6425074753265495367",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "19",
+							"uri": "http://localhost:5000/api",
+							"nodeName": "http:\/\/localhost:5000\/api",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1028",
+							"uri": "http://localhost:5000/api/",
+							"nodeName": "http:\/\/localhost:5000\/api\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "8",
+							"uri": "http://localhost:5000/api/2982553959890548850",
+							"nodeName": "http:\/\/localhost:5000\/api\/2982553959890548850",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "22",
+							"uri": "http://localhost:5000/api/admin",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1032",
+							"uri": "http://localhost:5000/api/admin/",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "9",
+							"uri": "http://localhost:5000/api/admin/460968335864574219",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/460968335864574219",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "5",
+							"uri": "http://localhost:5000/api/admin/audit",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/audit",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "403",
+							"otherinfo": ""
+						},
+						{
+							"id": "1031",
+							"uri": "http://localhost:5000/api/admin/audit/",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/audit\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "4",
+							"uri": "http://localhost:5000/api/admin/users",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/users",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "403",
+							"otherinfo": ""
+						},
+						{
+							"id": "1030",
+							"uri": "http://localhost:5000/api/admin/users/",
+							"nodeName": "http:\/\/localhost:5000\/api\/admin\/users\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "27",
+							"uri": "http://localhost:5000/api/auth",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1035",
+							"uri": "http://localhost:5000/api/auth/",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "10",
+							"uri": "http://localhost:5000/api/auth/1087156635180023556",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/1087156635180023556",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1175",
+							"uri": "http://localhost:5000/api/auth/actuator/health",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/actuator\/health",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1034",
+							"uri": "http://localhost:5000/api/documents/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "30",
+							"uri": "http://localhost:5000/api/documents/1",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "405",
+							"otherinfo": ""
+						},
+						{
+							"id": "1041",
+							"uri": "http://localhost:5000/api/documents/1/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "12",
+							"uri": "http://localhost:5000/api/documents/1/3711806543741001327",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/3711806543741001327",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1038",
+							"uri": "http://localhost:5000/api/documents/1/download/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/download\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1039",
+							"uri": "http://localhost:5000/api/documents/1/shares/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/shares\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "11",
+							"uri": "http://localhost:5000/api/documents/2816734073523161122",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/2816734073523161122",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "405",
+							"otherinfo": ""
+						},
+						{
+							"id": "1036",
+							"uri": "http://localhost:5000/api/documents/search/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/search\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1042",
+							"uri": "http://localhost:5000/api/health/",
+							"nodeName": "http:\/\/localhost:5000\/api\/health\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1037",
+							"uri": "http://localhost:5000/api/me/",
+							"nodeName": "http:\/\/localhost:5000\/api\/me\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1040",
+							"uri": "http://localhost:5000/api/public-key/",
+							"nodeName": "http:\/\/localhost:5000\/api\/public-key\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1",
+							"uri": "http://localhost:5000/api/auth/login",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/login ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "1017",
+							"uri": "http://localhost:5000/api/auth/login/",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/login\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "0",
+							"uri": "http://localhost:5000/api/auth/register",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/register ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "73",
+							"uri": "http://localhost:5000/api/auth/register",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/register ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "409",
+							"otherinfo": ""
+						},
+						{
+							"id": "1018",
+							"uri": "http://localhost:5000/api/auth/register/",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/register\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "2",
+							"uri": "http://localhost:5000/api/documents",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents ()(multipart:title,file)",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "1021",
+							"uri": "http://localhost:5000/api/documents/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/ ()(multipart:title,file)",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "3",
+							"uri": "http://localhost:5000/api/documents/1/shares",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/shares ()({username})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "1019",
+							"uri": "http://localhost:5000/api/documents/1/shares/",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/shares\/ ()({username})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "767",
+							"uri": "http://localhost:5000/computeMetadata/v1/",
+							"nodeName": "http:\/\/localhost:5000\/computeMetadata\/v1\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "758",
+							"uri": "http://localhost:5000/latest/meta-data/",
+							"nodeName": "http:\/\/localhost:5000\/latest\/meta-data\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "802",
+							"uri": "http://localhost:5000/metadata/instance",
+							"nodeName": "http:\/\/localhost:5000\/metadata\/instance ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "805",
+							"uri": "http://localhost:5000/metadata/v1",
+							"nodeName": "http:\/\/localhost:5000\/metadata\/v1 ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "777",
+							"uri": "http://localhost:5000/opc/v1/instance/",
+							"nodeName": "http:\/\/localhost:5000\/opc\/v1\/instance\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "787",
+							"uri": "http://localhost:5000/opc/v2/instance/",
+							"nodeName": "http:\/\/localhost:5000\/opc\/v2\/instance\/ ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "809",
+							"uri": "http://localhost:5000/openstack/latest/meta_data.json",
+							"nodeName": "http:\/\/localhost:5000\/openstack\/latest\/meta_data.json ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						}
+					],
+					"count": "46",
+					"systemic": false,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "",
+					"cweid": "388",
+					"wascid": "20",
+					"sourceid": "37"
+				},
+				{
+					"pluginid": "10111",
+					"alertRef": "10111",
+					"alert": "Authentication Request Identified",
+					"name": "Authentication Request Identified",
+					"riskcode": "0",
+					"confidence": "3",
+					"riskdesc": "Informational (High)",
+					"desc": "<p>The given request has been identified as an authentication request. The 'Other Info' field contains a set of key=value lines which identify any relevant fields. If the request is in a context which has an Authentication Method set to \"Auto-Detect\" then this rule will change the authentication to match the request identified.</p>",
+					"instances":[ 
+						{
+							"id": "51",
+							"uri": "http://localhost:5000/api/auth/login",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/login ()({username,password})",
+							"method": "POST",
+							"param": "username",
+							"attack": "",
+							"evidence": "password",
+							"otherinfo": "userParam=username\nuserValue=nonexistent-user\npasswordParam=password"
+						}
+					],
+					"count": "1",
+					"systemic": false,
+					"solution": "<p>This is an informational alert rather than a vulnerability and so there is nothing to fix.</p>",
+					"otherinfo": "<p>userParam=username</p><p>userValue=nonexistent-user</p><p>passwordParam=password</p>",
+					"reference": "<p>https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/</p>",
+					"cweid": "-1",
+					"wascid": "-1",
+					"sourceid": "9"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-1",
+					"alert": "Non-Storable Content",
+					"name": "Non-Storable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
+					"instances":[ 
+						{
+							"id": "55",
+							"uri": "http://localhost:5000/api/documents/1/shares",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents\/1\/shares",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "52",
+							"uri": "http://localhost:5000/api/health",
+							"nodeName": "http:\/\/localhost:5000\/api\/health",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "58",
+							"uri": "http://localhost:5000/api/me",
+							"nodeName": "http:\/\/localhost:5000\/api\/me",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "57",
+							"uri": "http://localhost:5000/api/auth/register",
+							"nodeName": "http:\/\/localhost:5000\/api\/auth\/register ()({username,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "54",
+							"uri": "http://localhost:5000/api/documents",
+							"nodeName": "http:\/\/localhost:5000\/api\/documents ()(multipart:title,file)",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>The content may be marked as storable by ensuring that the following conditions are satisfied:</p><p>The request method must be understood by the cache and defined as being cacheable (\"GET\", \"HEAD\", and \"POST\" are currently defined as cacheable)</p><p>The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood)</p><p>The \"no-store\" cache directive must not appear in the request or response header fields</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"private\" response directive must not appear in the response</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"Authorization\" header field must not appear in the request, unless the response explicitly allows it (using one of the \"must-revalidate\", \"public\", or \"s-maxage\" Cache-Control response directives)</p><p>In addition to the conditions above, at least one of the following conditions must also be satisfied by the response:</p><p>It must contain an \"Expires\" header field</p><p>It must contain a \"max-age\" response directive</p><p>For \"shared\" caches such as \"proxy\" caches, it must contain a \"s-maxage\" response directive</p><p>It must contain a \"Cache Control Extension\" that allows it to be cached</p><p>It must have a status code that is defined as cacheable by default (200, 203, 204, 206, 300, 301, 404, 405, 410, 414, 501).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "17"
+				}
+			]
+		}
+	],
+	"sequences":[
+	]
+
+}
