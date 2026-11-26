@@ -1,0 +1,11 @@
+# Passes Pod Security "restricted" but breaks both Kyverno policies: ':latest' tag and no limits.
+apiVersion: v1
+kind: Pod
+metadata: {name: bad-test, namespace: docvault}
+spec:
+  securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+  containers:
+    - name: c
+      image: busybox:latest
+      command: ["sleep", "30"]
+      securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}}
