@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     role            TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     is_locked       INTEGER NOT NULL DEFAULT 0,
     failed_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until    TEXT,
     created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -86,4 +86,15 @@ def init_db():
                 db.execute(stmt)
     else:
         db.executescript(sql)
+    _migrate(db)
     db.commit()
+
+
+def _migrate(db):
+    """Add columns introduced after the first release to databases created earlier."""
+    if db.pg:
+        db.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TEXT")
+        return
+    cols = {r["name"] for r in db.execute("PRAGMA table_info(users)").fetchall()}
+    if "locked_until" not in cols:
+        db.execute("ALTER TABLE users ADD COLUMN locked_until TEXT")
